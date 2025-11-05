@@ -2,7 +2,7 @@ import gzip
 import requests
 from collections import defaultdict
 import statistics
-from tools.helpers import categorize_roots, init_category_totals, init_orphan_feature, parse_gff_line_fast, process_feature, resolve_orphans
+from .tools.helpers import categorize_roots, init_category_totals, init_orphan_feature, parse_gff_line_fast, process_feature, resolve_orphans
 
 SKIP_FEATURES = {'region', 'chromosome', 'scaffold'}
 
