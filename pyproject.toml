@@ -49,6 +49,9 @@ dev = [
     "mypy>=0.950",
 ]
 
+[project.scripts]
+gffy = "gffy.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/emilior/gffy"
 Repository = "https://github.com/emilior/gffy"
