@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gffy"
+version = "0.0.1"
+description = "Fast and efficient GFF3 genomic statistics calculator"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Emilio R", email = "your-email@example.com"}
+]
+maintainers = [
+    {name = "Emilio R", email = "your-email@example.com"}
+]
+keywords = [
+    "gff3",
+    "genomics",
+    "bioinformatics",
+    "statistics",
+    "gene-annotation",
+    "transcriptomics"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=22.0",
+    "flake8>=4.0",
+    "mypy>=0.950",
+]
+
+[project.urls]
+Homepage = "https://github.com/emilior/gffy"
+Repository = "https://github.com/emilior/gffy"
+Documentation = "https://github.com/emilior/gffy#readme"
+"Bug Tracker" = "https://github.com/emilior/gffy/issues"
+
+[tool.setuptools]
+packages = ["gffy", "gffy.tools"]
+
+[tool.setuptools.package-data]
+gffy = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+

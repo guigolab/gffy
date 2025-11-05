@@ -1,0 +1,17 @@
+# Include documentation files
+include README.md
+include LICENSE
+include STATS_CALCULATION_GUIDE.md
+
+# Include data files
+include example.json
+include schema.json
+
+# Include package data
+recursive-include gffy *.py
+
+# Exclude unwanted files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+
