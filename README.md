@@ -13,7 +13,8 @@ A fast and efficient tool for computing comprehensive statistics from GFF3 genom
 - 🚀 **High Performance**: Streaming parser that processes large GFF3 files efficiently without loading entire files into memory
 - 📊 **Comprehensive Statistics**: Computes detailed metrics for genes, transcripts, exons, introns, and CDS features
 - 🧬 **Smart Categorization**: Automatically categorizes genes into coding, non-coding, and pseudogenes
-- 🌐 **Remote File Support**: Can directly process GFF3 files from URLs (including `.gz` compressed files)
+- 🌐 **Remote & Local File Support**: Can directly process GFF3 files from URLs or local file paths (including `.gz` compressed files)
+- 💻 **Command Line Interface**: Easy-to-use CLI tool for processing files from the command line
 - 📈 **Detailed Metrics**: Provides count, min, max, mean, and median statistics for various genomic features
 - 🔄 **Transcript Type Analysis**: Breaks down statistics by transcript types (mRNA, lnc_RNA, miRNA, etc.)
 
@@ -25,6 +26,8 @@ A fast and efficient tool for computing comprehensive statistics from GFF3 genom
 pip install gffy
 ```
 
+This installs both the Python library and the `gffy` command-line tool.
+
 ### From Source
 
 ```bash
@@ -32,6 +35,8 @@ git clone https://github.com/emilior/gffy.git
 cd gffy
 pip install -e .
 ```
+
+Installing from source also provides the `gffy` command-line interface.
 
 ## Quick Start
 
@@ -44,6 +49,10 @@ from gffy import compute_gff_stats
 url = "https://ftp.ensembl.org/pub/release-110/gff3/homo_sapiens/Homo_sapiens.GRCh38.110.gff3.gz"
 stats = compute_gff_stats(url)
 
+# Or process a local GFF3 file
+local_file = "/path/to/your/annotation.gff3.gz"
+stats = compute_gff_stats(local_file)
+
 # Access statistics
 print(f"Coding genes: {stats['coding_genes']['count']}")
 print(f"Non-coding genes: {stats['non_coding_genes']['count']}")
@@ -52,6 +61,37 @@ print(f"Pseudogenes: {stats['pseudogenes']['count']}")
 # Access detailed transcript statistics
 for transcript_type, data in stats['coding_genes']['transcripts']['types'].items():
     print(f"{transcript_type}: {data['count']} transcripts")
+```
+
+### Command Line Interface
+
+After installation, you can use the `gffy` command to process GFF3 files directly from the command line:
+
+```bash
+# Process a local GFF3 file
+gffy /path/to/your/annotation.gff3
+
+# Process a compressed GFF3 file
+gffy annotation.gff3.gz
+
+# Process from a URL
+gffy https://ftp.ensembl.org/pub/release-110/gff3/homo_sapiens/Homo_sapiens.GRCh38.110.gff3.gz
+
+# Save output to a file with pretty printing
+gffy annotation.gff3 --output stats.json --pretty
+
+# Get help
+gffy --help
+```
+
+The CLI outputs JSON statistics to stdout and progress messages to stderr, making it easy to pipe into other tools:
+
+```bash
+# Extract coding gene count
+gffy annotation.gff3 | jq '.coding_genes.count'
+
+# Save to file and view with jq
+gffy annotation.gff3 --output stats.json && jq '.coding_genes.transcripts.count' stats.json
 ```
 
 ### As a Module
@@ -190,20 +230,23 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 If you use `gffy` in your research, please cite:
 
 ```
-Emilio R. (2025). gffy: Fast GFF3 Genomic Statistics Calculator. 
+Emilio R. (2025). gffy: Fast GFF3 Genomic Statistics Calculator.
 https://github.com/emilior/gffy
 ```
 
 ## Changelog
 
-### Version 0.1.0 (2025-10-14)
+### Version 0.0.1 (2025-11-05)
 
 - Initial release
-- Support for GFF3 file processing from URLs
+- Support for GFF3 file processing from URLs and local file paths
 - Comprehensive statistics for genes, transcripts, and features
 - Categorization by gene type (coding, non-coding, pseudogene)
 - Per-transcript-type statistics
+- Command-line interface (`gffy` command)
 - JSON schema for output validation
+- Automatic gzip compression detection
+- Automatic gzip compression detection
 
 ## Support
 
