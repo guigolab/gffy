@@ -20,12 +20,6 @@ A fast and efficient tool for computing comprehensive statistics from GFF3 genom
 
 ## Installation
 
-### From PyPI
-
-```bash
-pip install gffy
-```
-
 This installs both the Python library and the `gffy` command-line tool.
 
 ### From Source
