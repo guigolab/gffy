@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gene Statistics Schema",
+  "description": "Schema for genomic statistics including coding genes, non-coding genes, and pseudogenes",
+  "type": "object",
+  "properties": {
+    "coding_genes": {
+      "$ref": "#/definitions/geneCategory"
+    },
+    "non_coding_genes": {
+      "$ref": "#/definitions/geneCategory"
+    },
+    "pseudogenes": {
+      "$ref": "#/definitions/geneCategory"
+    }
+  },
+  "required": ["coding_genes", "non_coding_genes", "pseudogenes"],
+  "additionalProperties": false,
+  "definitions": {
+    "geneCategory": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "length_stats": {
+          "$ref": "#/definitions/lengthStats"
+        },
+        "transcripts": {
+          "$ref": "#/definitions/transcripts"
+        },
+        "features": {
+          "$ref": "#/definitions/features"
+        }
+      },
+      "required": ["count", "length_stats", "transcripts", "features"],
+      "additionalProperties": false
+    },
+    "lengthStats": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "median": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": ["min", "max", "mean", "median"],
+      "additionalProperties": false
+    },
+    "transcripts": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "per_gene": {
+          "type": "number",
+          "minimum": 0
+        },
+        "types": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/definitions/transcriptType"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["count", "per_gene", "types"],
+      "additionalProperties": false
+    },
+    "transcriptType": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "per_gene": {
+          "type": "number",
+          "minimum": 0
+        },
+        "exons_per_transcript": {
+          "type": "number",
+          "minimum": 0
+        },
+        "length_stats": {
+          "$ref": "#/definitions/basicLengthStats"
+        },
+        "spliced_length_stats": {
+          "$ref": "#/definitions/basicLengthStats"
+        },
+        "exon_length_stats": {
+          "$ref": "#/definitions/basicLengthStats"
+        }
+      },
+      "required": ["count", "per_gene", "exons_per_transcript", "length_stats"],
+      "additionalProperties": false
+    },
+    "basicLengthStats": {
+      "type": "object",
+      "properties": {
+        "mean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "median": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": ["mean", "median"],
+      "additionalProperties": false
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "exons": {
+          "$ref": "#/definitions/feature"
+        },
+        "introns": {
+          "$ref": "#/definitions/feature"
+        },
+        "cds": {
+          "$ref": "#/definitions/feature"
+        }
+      },
+      "required": ["exons", "introns"],
+      "additionalProperties": false
+    },
+    "feature": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "length_stats": {
+          "$ref": "#/definitions/basicLengthStats"
+        }
+      },
+      "required": ["count", "length_stats"],
+      "additionalProperties": false
+    }
+  }
+}
+

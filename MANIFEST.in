@@ -4,11 +4,14 @@ include LICENSE
 include STATS_CALCULATION_GUIDE.md
 
 # Include data files
-include example.json
-include schema.json
+recursive-include data *.json
+recursive-include data *.txt
+
+# Include example files
+recursive-include examples *.json
 
 # Include package data
-recursive-include gffy *.py
+recursive-include src *.py
 
 # Exclude unwanted files
 global-exclude __pycache__

@@ -59,6 +59,7 @@ Documentation = "https://github.com/emilior/gffy#readme"
 "Bug Tracker" = "https://github.com/emilior/gffy/issues"
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 packages = ["gffy", "gffy.tools"]
 
 [tool.setuptools.package-data]
