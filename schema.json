@@ -1,20 +1,23 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Gene Statistics Schema",
-  "description": "Schema for genomic statistics including coding genes, non-coding genes, and pseudogenes with per-transcript feature statistics",
+  "description": "Schema for genomic statistics including coding genes, long non-coding genes, short non-coding genes, and pseudogenes with per-transcript feature statistics",
   "type": "object",
   "properties": {
     "coding_genes": {
       "$ref": "#/definitions/geneCategory"
     },
-    "non_coding_genes": {
+    "long_non_coding_genes": {
+      "$ref": "#/definitions/geneCategory"
+    },
+    "short_non_coding_genes": {
       "$ref": "#/definitions/geneCategory"
     },
     "pseudogenes": {
       "$ref": "#/definitions/geneCategory"
     }
   },
-  "required": ["coding_genes", "non_coding_genes", "pseudogenes"],
+  "required": ["coding_genes", "long_non_coding_genes", "short_non_coding_genes", "pseudogenes"],
   "additionalProperties": false,
   "definitions": {
     "geneCategory": {
@@ -24,25 +27,25 @@
           "type": "integer",
           "minimum": 0
         },
-        "length_stats": {
+        "length": {
           "$ref": "#/definitions/lengthStats"
         },
         "transcripts": {
           "$ref": "#/definitions/transcripts"
         }
       },
-      "required": ["count", "length_stats", "transcripts"],
+      "required": ["count", "length", "transcripts"],
       "additionalProperties": false
     },
     "lengthStats": {
       "type": "object",
       "properties": {
         "min": {
-          "type": "integer",
+          "type": "number",
           "minimum": 0
         },
         "max": {
-          "type": "integer",
+          "type": "number",
           "minimum": 0
         },
         "mean": {
@@ -64,21 +67,24 @@
           "type": "integer",
           "minimum": 0
         },
-        "per_gene": {
+        "density": {
           "type": "number",
           "minimum": 0
         },
-        "types": {
+        "length": {
+          "$ref": "#/definitions/lengthStats"
+        },
+        "by_type": {
           "type": "object",
           "patternProperties": {
             ".*": {
               "$ref": "#/definitions/transcriptType"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         }
       },
-      "required": ["count", "per_gene", "types"],
+      "required": ["count", "density", "length", "by_type"],
       "additionalProperties": false
     },
     "transcriptType": {
@@ -88,65 +94,76 @@
           "type": "integer",
           "minimum": 0
         },
-        "per_gene": {
+        "density": {
           "type": "number",
           "minimum": 0
         },
-        "length_stats": {
-          "$ref": "#/definitions/basicLengthStats"
+        "length": {
+          "$ref": "#/definitions/lengthStats"
         },
-        "feature_stats": {
+        "features": {
           "$ref": "#/definitions/featureStats"
         }
       },
-      "required": ["count", "per_gene", "length_stats", "feature_stats"],
-      "additionalProperties": false
-    },
-    "basicLengthStats": {
-      "type": "object",
-      "properties": {
-        "mean": {
-          "type": "number",
-          "minimum": 0
-        },
-        "median": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": ["mean", "median"],
+      "required": ["count", "density", "length", "features"],
       "additionalProperties": false
     },
     "featureStats": {
       "type": "object",
       "properties": {
-        "exons": {
-          "$ref": "#/definitions/featureTypeStats"
+        "exon": {
+          "$ref": "#/definitions/exonStats"
         },
-        "introns": {
-          "$ref": "#/definitions/featureTypeStats"
+        "intron": {
+          "$ref": "#/definitions/intronStats"
         },
         "cds": {
-          "$ref": "#/definitions/featureTypeStats"
+          "$ref": "#/definitions/exonStats"
         }
       },
-      "required": ["exons"],
+      "required": ["exon"],
       "additionalProperties": false
     },
-    "featureTypeStats": {
+    "exonStats": {
       "type": "object",
       "properties": {
         "count": {
-          "$ref": "#/definitions/basicLengthStats"
+          "type": "integer",
+          "minimum": 0
         },
-        "average_length": {
-          "$ref": "#/definitions/basicLengthStats"
+        "density": {
+          "type": "number",
+          "minimum": 0
         },
-        "concatenated_length": {
-          "$ref": "#/definitions/basicLengthStats"
+        "length": {
+          "$ref": "#/definitions/lengthStats"
+        },
+        "length_concatenated": {
+          "$ref": "#/definitions/lengthStats"
         }
       },
-      "required": ["count"],
+      "required": ["count", "density", "length", "length_concatenated"],
+      "additionalProperties": false
+    },
+    "intronStats": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0
+        },
+        "length": {
+          "$ref": "#/definitions/lengthStats"
+        },
+        "length_concatenated": {
+          "$ref": "#/definitions/lengthStats"
+        }
+      },
+      "required": ["count", "density", "length", "length_concatenated"],
       "additionalProperties": false
     }
   }

@@ -14,7 +14,7 @@ def init_orphan_feature(
     return OrphanFeature(feature_id, feature_type, start, end, parent_ids, biotype)
 
 
-def categorize_roots(roots: dict) -> dict:
+def categorize_roots(roots: dict, transcripts: dict) -> dict:
     root_to_category = {}
     for root_id, info in roots.items():
         feature_type = info.feature_type
@@ -24,7 +24,22 @@ def categorize_roots(roots: dict) -> dict:
         elif info.has_cds or "protein_coding" in biotype.lower():
             root_to_category[root_id] = "coding"
         elif info.has_exon:
-            root_to_category[root_id] = "non_coding"
+            # Classify non-coding genes based on length and exon count
+            gene_length = info.length
+            max_exon_count = 1
+            
+            # Find maximum exon count across all transcripts of this gene
+            for transcript in transcripts.values():
+                if transcript.gene_id == root_id and transcript.exons_flat:
+                    exon_count = len(transcript.exons_flat) // 2
+                    max_exon_count = max(max_exon_count, exon_count)
+            
+            # Long non-coding: >200bp AND multiple exons
+            # Short non-coding: <=200bp OR single exon
+            if gene_length > 200 and max_exon_count > 1:
+                root_to_category[root_id] = "long_non_coding"
+            else:
+                root_to_category[root_id] = "short_non_coding"
         else:
             root_to_category[root_id] = None
     return root_to_category
@@ -41,7 +56,16 @@ def init_category_totals() -> dict:
             "cds_len_sum": 0,
             "cds_transcripts": 0,
         },
-        "non_coding": {
+        "long_non_coding": {
+            "exons": 0,
+            "introns": 0,
+            "cds": 0,
+            "exon_len_sum": 0,
+            "intron_len_sum": 0,
+            "cds_len_sum": 0,
+            "cds_transcripts": 0,
+        },
+        "short_non_coding": {
             "exons": 0,
             "introns": 0,
             "cds": 0,

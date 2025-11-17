@@ -22,13 +22,15 @@ class TestComputeGffStats:
         # Basic validation of returned structure
         assert isinstance(stats, dict)
         assert "coding_genes" in stats
-        assert "non_coding_genes" in stats
+        assert "long_non_coding_genes" in stats
+        assert "short_non_coding_genes" in stats
         assert "pseudogenes" in stats
 
         # Check that we have some genes
         total_genes = (
             stats["coding_genes"]["count"] +
-            stats["non_coding_genes"]["count"] +
+            stats["long_non_coding_genes"]["count"] +
+            stats["short_non_coding_genes"]["count"] +
             stats["pseudogenes"]["count"]
         )
         assert total_genes > 0

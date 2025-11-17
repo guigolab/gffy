@@ -22,8 +22,8 @@ def compute_gff_stats(gff_source: str) -> dict:
         gff_source: URL (http/https/ftp) or local file path to GFF3 file (may be compressed)
 
     Returns:
-        Dictionary containing comprehensive statistics for coding genes, non-coding genes,
-        and pseudogenes with transcript, exon, intron, and CDS metrics.
+        Dictionary containing comprehensive statistics for coding genes, long non-coding genes,
+        short non-coding genes, and pseudogenes with transcript, exon, intron, and CDS metrics.
 
     Raises:
         FileNotFoundError: If local file path does not exist
@@ -154,14 +154,15 @@ def compute_gff_stats(gff_source: str) -> dict:
             if orphans:
                 print(f"Warning: {len(orphans)} orphans could not be resolved")
 
-        # Categorize gene roots into coding, non-coding, and pseudogene categories
-        root_to_category = categorize_roots(roots)
+        # Categorize gene roots into coding, long_non_coding, short_non_coding, and pseudogene categories
+        root_to_category = categorize_roots(roots, transcripts)
         get_category = root_to_category.get
 
         # Precompute per-category gene lengths to avoid recomputation
         cat_gene_lengths = {
             "coding": [],
-            "non_coding": [],
+            "long_non_coding": [],
+            "short_non_coding": [],
             "pseudogene": [],
         }
         for rid, info in roots.items():
@@ -186,7 +187,19 @@ def compute_gff_stats(gff_source: str) -> dict:
                 "type_cds_lens": defaultdict(list),
                 "type_concat_cds_lens": defaultdict(list),
             },
-            "non_coding": {
+            "long_non_coding": {
+                "per_gene_type_counts": defaultdict(lambda: defaultdict(int)),
+                "transcript_lengths": [],
+                "type_transcripts": defaultdict(int),
+                "type_span_lens": defaultdict(list),
+                "type_exon_counts": defaultdict(list),
+                "type_exon_lens": defaultdict(list),
+                "type_concat_exon_lens": defaultdict(list),
+                "type_intron_counts": defaultdict(list),
+                "type_intron_lens": defaultdict(list),
+                "type_concat_intron_lens": defaultdict(list),
+            },
+            "short_non_coding": {
                 "per_gene_type_counts": defaultdict(lambda: defaultdict(int)),
                 "transcript_lengths": [],
                 "type_transcripts": defaultdict(int),
@@ -421,7 +434,8 @@ def compute_gff_stats(gff_source: str) -> dict:
 
         return {
             "coding_genes": build_category("coding"),
-            "non_coding_genes": build_category("non_coding"),
+            "long_non_coding_genes": build_category("long_non_coding"),
+            "short_non_coding_genes": build_category("short_non_coding"),
             "pseudogenes": build_category("pseudogene"),
         }
 
