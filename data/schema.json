@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Gene Statistics Schema",
-  "description": "Schema for genomic statistics including coding genes, non-coding genes, and pseudogenes",
+  "description": "Schema for genomic statistics including coding genes, non-coding genes, and pseudogenes with per-transcript feature statistics",
   "type": "object",
   "properties": {
     "coding_genes": {
@@ -29,12 +29,9 @@
         },
         "transcripts": {
           "$ref": "#/definitions/transcripts"
-        },
-        "features": {
-          "$ref": "#/definitions/features"
         }
       },
-      "required": ["count", "length_stats", "transcripts", "features"],
+      "required": ["count", "length_stats", "transcripts"],
       "additionalProperties": false
     },
     "lengthStats": {
@@ -95,21 +92,14 @@
           "type": "number",
           "minimum": 0
         },
-        "exons_per_transcript": {
-          "type": "number",
-          "minimum": 0
-        },
         "length_stats": {
           "$ref": "#/definitions/basicLengthStats"
         },
-        "spliced_length_stats": {
-          "$ref": "#/definitions/basicLengthStats"
-        },
-        "exon_length_stats": {
-          "$ref": "#/definitions/basicLengthStats"
+        "feature_stats": {
+          "$ref": "#/definitions/featureStats"
         }
       },
-      "required": ["count", "per_gene", "exons_per_transcript", "length_stats"],
+      "required": ["count", "per_gene", "length_stats", "feature_stats"],
       "additionalProperties": false
     },
     "basicLengthStats": {
@@ -127,34 +117,36 @@
       "required": ["mean", "median"],
       "additionalProperties": false
     },
-    "features": {
+    "featureStats": {
       "type": "object",
       "properties": {
         "exons": {
-          "$ref": "#/definitions/feature"
+          "$ref": "#/definitions/featureTypeStats"
         },
         "introns": {
-          "$ref": "#/definitions/feature"
+          "$ref": "#/definitions/featureTypeStats"
         },
         "cds": {
-          "$ref": "#/definitions/feature"
+          "$ref": "#/definitions/featureTypeStats"
         }
       },
-      "required": ["exons", "introns"],
+      "required": ["exons"],
       "additionalProperties": false
     },
-    "feature": {
+    "featureTypeStats": {
       "type": "object",
       "properties": {
         "count": {
-          "type": "integer",
-          "minimum": 0
+          "$ref": "#/definitions/basicLengthStats"
         },
-        "length_stats": {
+        "average_length": {
+          "$ref": "#/definitions/basicLengthStats"
+        },
+        "concatenated_length": {
           "$ref": "#/definitions/basicLengthStats"
         }
       },
-      "required": ["count", "length_stats"],
+      "required": ["count"],
       "additionalProperties": false
     }
   }

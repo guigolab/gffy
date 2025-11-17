@@ -5,7 +5,6 @@ from collections import defaultdict
 import statistics
 from .tools.helpers import (
     categorize_roots,
-    init_category_totals,
     init_orphan_feature,
     parse_gff_line_fast,
     process_feature,
@@ -159,9 +158,6 @@ def compute_gff_stats(gff_source: str) -> dict:
         root_to_category = categorize_roots(roots)
         get_category = root_to_category.get
 
-        # Initialize totals for each gene category
-        category_totals = init_category_totals()
-
         # Precompute per-category gene lengths to avoid recomputation
         cat_gene_lengths = {
             "coding": [],
@@ -173,43 +169,46 @@ def compute_gff_stats(gff_source: str) -> dict:
             if cat:
                 cat_gene_lengths[cat].append(info.length)
 
-        # Initialize per-category per-type statistics aggregates
-        # This avoids rescanning transcripts during final statistics building
+        # Initialize per-category statistics aggregates
         cat_type_stats = {
             "coding": {
-                "per_gene_type_counts": defaultdict(
-                    lambda: defaultdict(int)
-                ),  # gene_id -> type -> count
-                "type_transcripts": defaultdict(int),  # type -> total transcripts
-                "type_exons": defaultdict(int),  # type -> total exons
-                "type_span_sum": defaultdict(int),  # type -> sum of genomic spans
-                "type_spliced_sum": defaultdict(int),  # type -> sum of spliced lengths
-                "type_exon_len_sum": defaultdict(int),  # type -> sum of exon lengths
-                "type_span_lens": defaultdict(list),  # type -> list of span lengths
-                "type_spliced_lens": defaultdict(list),  # type -> list of spliced lengths
-                "type_exon_lens": defaultdict(list),  # type -> list of exon lengths
+                "per_gene_type_counts": defaultdict(lambda: defaultdict(int)),
+                "transcript_lengths": [],
+                "type_transcripts": defaultdict(int),
+                "type_span_lens": defaultdict(list),
+                "type_exon_counts": defaultdict(list),
+                "type_exon_lens": defaultdict(list),
+                "type_concat_exon_lens": defaultdict(list),
+                "type_intron_counts": defaultdict(list),
+                "type_intron_lens": defaultdict(list),
+                "type_concat_intron_lens": defaultdict(list),
+                "type_cds_counts": defaultdict(list),
+                "type_cds_lens": defaultdict(list),
+                "type_concat_cds_lens": defaultdict(list),
             },
             "non_coding": {
                 "per_gene_type_counts": defaultdict(lambda: defaultdict(int)),
+                "transcript_lengths": [],
                 "type_transcripts": defaultdict(int),
-                "type_exons": defaultdict(int),
-                "type_span_sum": defaultdict(int),
-                "type_spliced_sum": defaultdict(int),
-                "type_exon_len_sum": defaultdict(int),
                 "type_span_lens": defaultdict(list),
-                "type_spliced_lens": defaultdict(list),
+                "type_exon_counts": defaultdict(list),
                 "type_exon_lens": defaultdict(list),
+                "type_concat_exon_lens": defaultdict(list),
+                "type_intron_counts": defaultdict(list),
+                "type_intron_lens": defaultdict(list),
+                "type_concat_intron_lens": defaultdict(list),
             },
             "pseudogene": {
                 "per_gene_type_counts": defaultdict(lambda: defaultdict(int)),
+                "transcript_lengths": [],
                 "type_transcripts": defaultdict(int),
-                "type_exons": defaultdict(int),
-                "type_span_sum": defaultdict(int),
-                "type_spliced_sum": defaultdict(int),
-                "type_exon_len_sum": defaultdict(int),
                 "type_span_lens": defaultdict(list),
-                "type_spliced_lens": defaultdict(list),
+                "type_exon_counts": defaultdict(list),
                 "type_exon_lens": defaultdict(list),
+                "type_concat_exon_lens": defaultdict(list),
+                "type_intron_counts": defaultdict(list),
+                "type_intron_lens": defaultdict(list),
+                "type_concat_intron_lens": defaultdict(list),
             },
         }
 
@@ -219,70 +218,59 @@ def compute_gff_stats(gff_source: str) -> dict:
             if not category:
                 continue
 
-            cat_totals = category_totals[category]
             cts = cat_type_stats[category]
 
-            if tinfo.cds_total_len > 0:
-                cat_totals["cds"] += tinfo.cds_segments
-                cat_totals["cds_len_sum"] += tinfo.cds_total_len
-                cat_totals["cds_transcripts"] += 1
-
-            exons_flat = tinfo.exons_flat
-            exon_count = len(exons_flat) // 2
-            cat_totals["exons"] += exon_count
-            cat_totals["exon_len_sum"] += tinfo.exon_len_sum
-
-            # Optimized intron calculation
-            if exon_count > 1:
-                indices = list(range(0, len(exons_flat), 2))
-                indices.sort(key=lambda i: exons_flat[i])
-
-                for j in range(len(indices) - 1):
-                    i = indices[j]
-                    i_next = indices[j + 1]
-                    intron_len = exons_flat[i_next] - exons_flat[i + 1] - 1
-                    if intron_len > 0:
-                        cat_totals["introns"] += 1
-                        cat_totals["intron_len_sum"] += intron_len
-                        # Store intron length for median later
-                        intron_lens = cat_totals.setdefault("intron_lens", [])
-                        intron_lens.append(intron_len)
-
-            # Store exon lengths for median
-            if exon_count:
-                exon_lens = cat_totals.setdefault("exon_lens", [])
-                # push each exon length quickly
-                for k in range(0, len(exons_flat), 2):
-                    exon_lens.append(exons_flat[k + 1] - exons_flat[k] + 1)
-
-            # Store CDS lengths for median (per segment)
-            if tinfo.cds_segments:
-                cds_lens = cat_totals.setdefault("cds_lens", [])
-                cds_lens.extend(tinfo.cds_lens)
-
-            # Per-type aggregates (only for transcripts with exons and with a defined type)
             if tinfo.exons_flat and tinfo.type:
                 ttype = tinfo.type
                 exons_flat = tinfo.exons_flat
                 exon_count = len(exons_flat) // 2
-                # counts per gene for per_gene ratios
+                
                 cts["per_gene_type_counts"][tinfo.gene_id][ttype] += 1
-                # totals
                 cts["type_transcripts"][ttype] += 1
-                cts["type_exons"][ttype] += exon_count
-                # span and spliced
+                
                 starts = exons_flat[0::2]
                 ends = exons_flat[1::2]
                 span_len = max(ends) - min(starts) + 1
-                cts["type_span_sum"][ttype] += span_len
-                cts["type_spliced_sum"][ttype] += tinfo.exon_len_sum
                 cts["type_span_lens"][ttype].append(span_len)
-                cts["type_spliced_lens"][ttype].append(tinfo.exon_len_sum)
-                # exon lengths
-                for k in range(0, len(exons_flat), 2):
-                    elen = exons_flat[k + 1] - exons_flat[k] + 1
-                    cts["type_exon_len_sum"][ttype] += elen
-                    cts["type_exon_lens"][ttype].append(elen)
+                cts["transcript_lengths"].append(span_len)
+                
+                # Exon statistics
+                cts["type_exon_counts"][ttype].append(exon_count)
+                cts["type_concat_exon_lens"][ttype].append(tinfo.exon_len_sum)
+                
+                for j in range(exon_count):
+                    exon_len = ends[j] - starts[j] + 1
+                    cts["type_exon_lens"][ttype].append(exon_len)
+                
+                # Intron statistics
+                if exon_count > 1:
+                    indices = list(range(0, len(exons_flat), 2))
+                    indices.sort(key=lambda i: exons_flat[i])
+                    
+                    intron_count = 0
+                    intron_len_sum = 0
+                    intron_lens = []
+                    for j in range(len(indices) - 1):
+                        i = indices[j]
+                        i_next = indices[j + 1]
+                        intron_len = exons_flat[i_next] - exons_flat[i + 1] - 1
+                        if intron_len > 0:
+                            intron_count += 1
+                            intron_len_sum += intron_len
+                            intron_lens.append(intron_len)
+                    
+                    if intron_count > 0:
+                        cts["type_intron_counts"][ttype].append(intron_count)
+                        cts["type_concat_intron_lens"][ttype].append(intron_len_sum)
+                        cts["type_intron_lens"][ttype].extend(intron_lens)
+                
+                # CDS statistics
+                if tinfo.cds_segments > 0 and "type_cds_counts" in cts:
+                    cts["type_cds_counts"][ttype].append(tinfo.cds_segments)
+                    cts["type_concat_cds_lens"][ttype].append(tinfo.cds_total_len)
+                    
+                    for cds_len in tinfo.cds_lens:
+                        cts["type_cds_lens"][ttype].append(cds_len)
 
         # Build final results dictionary
         def build_category(category_name: str) -> dict:
@@ -294,13 +282,18 @@ def compute_gff_stats(gff_source: str) -> dict:
             cts = cat_type_stats[category_name]
             per_gene_type_counts = cts["per_gene_type_counts"]
             type_transcripts = cts["type_transcripts"]
-            type_exons = cts["type_exons"]
-            type_span_sum = cts["type_span_sum"]
-            type_spliced_sum = cts["type_spliced_sum"]
-            type_exon_len_sum = cts["type_exon_len_sum"]
             type_span_lens = cts["type_span_lens"]
-            type_spliced_lens = cts["type_spliced_lens"]
+            transcript_lengths = cts["transcript_lengths"]
+            
+            type_exon_counts = cts["type_exon_counts"]
             type_exon_lens = cts["type_exon_lens"]
+            type_concat_exon_lens = cts["type_concat_exon_lens"]
+            type_intron_counts = cts["type_intron_counts"]
+            type_intron_lens = cts["type_intron_lens"]
+            type_concat_intron_lens = cts["type_concat_intron_lens"]
+            type_cds_counts = cts.get("type_cds_counts", defaultdict(list))
+            type_cds_lens = cts.get("type_cds_lens", defaultdict(list))
+            type_concat_cds_lens = cts.get("type_concat_cds_lens", defaultdict(list))
 
             child_totals = defaultdict(int)
             child_counts_per_gene = defaultdict(list)
@@ -310,115 +303,119 @@ def compute_gff_stats(gff_source: str) -> dict:
                     child_counts_per_gene[ctype].append(cnt)
 
             total_transcripts = sum(type_transcripts.values())
-            cat_totals = category_totals[category_name]
-            get_lens = cat_totals.get
-            # Medians
-            gene_median = statistics.median(gene_lengths) if gene_lengths else 0
-            exon_median = (
-                statistics.median(get_lens("exon_lens", [])) if get_lens("exon_lens") else 0
-            )
-            intron_median = (
-                statistics.median(get_lens("intron_lens", [])) if get_lens("intron_lens") else 0
-            )
-            cds_median = statistics.median(get_lens("cds_lens", [])) if get_lens("cds_lens") else 0
 
             category_obj = {
                 "count": gene_count,
-                "length_stats": {
+                "length": {
                     "min": min(gene_lengths) if gene_lengths else 0,
                     "max": max(gene_lengths) if gene_lengths else 0,
                     "mean": round(sum(gene_lengths) / len(gene_lengths), 2) if gene_lengths else 0,
-                    "median": gene_median,
+                    "median": statistics.median(gene_lengths) if gene_lengths else 0,
                 },
                 "transcripts": {
                     "count": total_transcripts,
-                    "per_gene": round(total_transcripts / gene_count, 2) if gene_count else 0,
-                    "types": {},
-                },
-                "features": {
-                    "exons": {
-                        "count": cat_totals["exons"],
-                        "length_stats": {
-                            "mean": (
-                                round(cat_totals["exon_len_sum"] / cat_totals["exons"], 2)
-                                if cat_totals["exons"]
-                                else 0
-                            ),
-                            "median": exon_median,
-                        },
+                    "density": round(total_transcripts / gene_count, 2) if gene_count else 0,
+                    "length": {
+                        "min": min(transcript_lengths) if transcript_lengths else 0,
+                        "max": max(transcript_lengths) if transcript_lengths else 0,
+                        "mean": round(statistics.mean(transcript_lengths), 2) if transcript_lengths else 0,
+                        "median": statistics.median(transcript_lengths) if transcript_lengths else 0,
                     },
-                    "introns": {
-                        "count": cat_totals["introns"],
-                        "length_stats": {
-                            "mean": (
-                                round(cat_totals["intron_len_sum"] / cat_totals["introns"], 2)
-                                if cat_totals["introns"]
-                                else 0
-                            ),
-                            "median": intron_median,
-                        },
-                    },
+                    "by_type": {},
                 },
             }
-            if cat_totals["cds"] > 0:
-                category_obj["features"]["cds"] = {
-                    "count": cat_totals["cds"],
-                    "length_stats": {
-                        "mean": (
-                            round(cat_totals["cds_len_sum"] / cat_totals["cds_transcripts"], 2)
-                            if cat_totals["cds_transcripts"]
-                            else 0
-                        ),
-                        "median": cds_median,
-                    },
-                }
-            get_type_trans = type_transcripts.get
+            
             for ctype, total in child_totals.items():
                 counts = child_counts_per_gene[ctype]
-                type_trans = get_type_trans(ctype, 0)
+                type_trans = type_transcripts.get(ctype, 0)
 
-                exons_total_for_type = type_exons.get(ctype, 0)
-                one_exon_per_transcript = type_trans > 0 and exons_total_for_type == type_trans
-
+                span_lens_list = type_span_lens.get(ctype, [])
+                
                 type_entry = {
                     "count": total,
-                    "per_gene": round(sum(counts) / len(counts), 2) if counts else 0,
-                    "exons_per_transcript": (
-                        round(exons_total_for_type / type_trans, 2) if type_trans else 0
-                    ),
-                    "length_stats": {
-                        "mean": round(type_span_sum[ctype] / type_trans, 2) if type_trans else 0,
-                        "median": (
-                            statistics.median(type_span_lens[ctype])
-                            if type_span_lens.get(ctype)
-                            else 0
-                        ),
+                    "density": round(sum(counts) / len(counts), 2) if counts else 0,
+                    "length": {
+                        "min": min(span_lens_list) if span_lens_list else 0,
+                        "max": max(span_lens_list) if span_lens_list else 0,
+                        "mean": round(statistics.mean(span_lens_list), 2) if span_lens_list else 0,
+                        "median": statistics.median(span_lens_list) if span_lens_list else 0,
                     },
+                    "features": {},
                 }
 
-                if not one_exon_per_transcript:
-                    type_entry["spliced_length_stats"] = {
-                        "mean": round(type_spliced_sum[ctype] / type_trans, 2) if type_trans else 0,
-                        "median": (
-                            statistics.median(type_spliced_lens[ctype])
-                            if type_spliced_lens.get(ctype)
-                            else 0
-                        ),
+                # Exon statistics
+                exon_counts_list = type_exon_counts.get(ctype, [])
+                exon_lens_list = type_exon_lens.get(ctype, [])
+                concat_exon_lens_list = type_concat_exon_lens.get(ctype, [])
+                
+                if exon_counts_list:
+                    total_exons = sum(exon_counts_list)
+                    type_entry["features"]["exon"] = {
+                        "count": total_exons,
+                        "density": round(statistics.mean(exon_counts_list), 2),
+                        "length": {
+                            "min": min(exon_lens_list) if exon_lens_list else 0,
+                            "max": max(exon_lens_list) if exon_lens_list else 0,
+                            "mean": round(statistics.mean(exon_lens_list), 2) if exon_lens_list else 0,
+                            "median": round(statistics.median(exon_lens_list), 2) if exon_lens_list else 0,
+                        },
+                        "length_concatenated": {
+                            "min": min(concat_exon_lens_list) if concat_exon_lens_list else 0,
+                            "max": max(concat_exon_lens_list) if concat_exon_lens_list else 0,
+                            "mean": round(statistics.mean(concat_exon_lens_list), 2) if concat_exon_lens_list else 0,
+                            "median": statistics.median(concat_exon_lens_list) if concat_exon_lens_list else 0,
+                        }
                     }
-                    type_entry["exon_length_stats"] = {
-                        "mean": (
-                            round(type_exon_len_sum[ctype] / exons_total_for_type, 2)
-                            if exons_total_for_type
-                            else 0
-                        ),
-                        "median": (
-                            statistics.median(type_exon_lens[ctype])
-                            if type_exon_lens.get(ctype)
-                            else 0
-                        ),
+                
+                # Intron statistics
+                intron_counts_list = type_intron_counts.get(ctype, [])
+                intron_lens_list = type_intron_lens.get(ctype, [])
+                concat_intron_lens_list = type_concat_intron_lens.get(ctype, [])
+                
+                if intron_counts_list:
+                    total_introns = sum(intron_counts_list)
+                    type_entry["features"]["intron"] = {
+                        "count": total_introns,
+                        "density": round(statistics.mean(intron_counts_list), 2),
+                        "length": {
+                            "min": min(intron_lens_list) if intron_lens_list else 0,
+                            "max": max(intron_lens_list) if intron_lens_list else 0,
+                            "mean": round(statistics.mean(intron_lens_list), 2) if intron_lens_list else 0,
+                            "median": round(statistics.median(intron_lens_list), 2) if intron_lens_list else 0,
+                        },
+                        "length_concatenated": {
+                            "min": min(concat_intron_lens_list) if concat_intron_lens_list else 0,
+                            "max": max(concat_intron_lens_list) if concat_intron_lens_list else 0,
+                            "mean": round(statistics.mean(concat_intron_lens_list), 2) if concat_intron_lens_list else 0,
+                            "median": statistics.median(concat_intron_lens_list) if concat_intron_lens_list else 0,
+                        }
+                    }
+                
+                # CDS statistics
+                cds_counts_list = type_cds_counts.get(ctype, [])
+                cds_lens_list = type_cds_lens.get(ctype, [])
+                concat_cds_lens_list = type_concat_cds_lens.get(ctype, [])
+                
+                if cds_counts_list:
+                    total_cds = sum(cds_counts_list)
+                    type_entry["features"]["cds"] = {
+                        "count": total_cds,
+                        "density": round(statistics.mean(cds_counts_list), 2),
+                        "length": {
+                            "min": min(cds_lens_list) if cds_lens_list else 0,
+                            "max": max(cds_lens_list) if cds_lens_list else 0,
+                            "mean": round(statistics.mean(cds_lens_list), 2) if cds_lens_list else 0,
+                            "median": round(statistics.median(cds_lens_list), 2) if cds_lens_list else 0,
+                        },
+                        "length_concatenated": {
+                            "min": min(concat_cds_lens_list) if concat_cds_lens_list else 0,
+                            "max": max(concat_cds_lens_list) if concat_cds_lens_list else 0,
+                            "mean": round(statistics.mean(concat_cds_lens_list), 2) if concat_cds_lens_list else 0,
+                            "median": statistics.median(concat_cds_lens_list) if concat_cds_lens_list else 0,
+                        }
                     }
 
-                category_obj["transcripts"]["types"][ctype] = type_entry
+                category_obj["transcripts"]["by_type"][ctype] = type_entry
 
             return category_obj
 
