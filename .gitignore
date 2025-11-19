@@ -139,5 +139,4 @@ Thumbs.db
 # Project specific
 *.gff3
 *.gff3.gz
-tests/fixtures/sample_data 
-
+data/
