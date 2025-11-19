@@ -19,7 +19,7 @@ def main():
 Examples:
   %(prog)s https://example.com/annotation.gff3.gz
   %(prog)s /path/to/local/annotation.gff3 --output stats.json
-  %(prog)s annotation.gff3 --pretty
+  %(prog)s annotation.gff3 --pretty --gzipped
         """
     )
 
@@ -40,6 +40,12 @@ Examples:
         help="Pretty-print JSON output with indentation"
     )
 
+    parser.add_argument(
+        "--gzipped",
+        action="store_true",
+        help="Gzip the input file"
+    )
+
     args = parser.parse_args()
 
     try:
@@ -53,7 +59,8 @@ Examples:
 
         builtins.print = stderr_print
 
-        stats = compute_gff_stats(args.gff_source)
+        is_gzipped = args.gzipped
+        stats = compute_gff_stats(args.gff_source, is_gzipped)
 
         # Restore original print
         builtins.print = original_print

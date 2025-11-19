@@ -1,0 +1,954 @@
+{
+    "coding_genes": {
+        "count": 20532,
+        "length": {
+            "min": 8,
+            "max": 2473539,
+            "mean": 67560.46,
+            "median": 26474.5
+        },
+        "transcripts": {
+            "mRNA": {
+                "count": 111954,
+                "density": 5.56,
+                "length": {
+                    "min": 27,
+                    "max": 2471657,
+                    "mean": 58332.34,
+                    "median": 23945.5
+                },
+                "features": {
+                    "exon": {
+                        "count": 1106316,
+                        "density": 9.88,
+                        "length": {
+                            "min": 1,
+                            "max": 33290,
+                            "mean": 246.36,
+                            "median": 126.0
+                        },
+                        "length_concatenated": {
+                            "min": 27,
+                            "max": 109488,
+                            "mean": 2434.47,
+                            "median": 1778.0
+                        }
+                    },
+                    "intron": {
+                        "count": 110401,
+                        "density": 0.99,
+                        "length": {
+                            "min": 1,
+                            "max": 2468006,
+                            "mean": 56684.18,
+                            "median": 22429
+                        }
+                    },
+                    "cds": {
+                        "count": 902752,
+                        "density": 8.06,
+                        "length": {
+                            "min": 1,
+                            "max": 21693,
+                            "mean": 149.89,
+                            "median": 116.0
+                        },
+                        "length_concatenated": {
+                            "min": 1,
+                            "max": 35992,
+                            "mean": 402.81,
+                            "median": 251.0
+                        }
+                    }
+                }
+            },
+            "transcript": {
+                "count": 26551,
+                "density": 2.6,
+                "length": {
+                    "min": 19,
+                    "max": 1978078,
+                    "mean": 31504.37,
+                    "median": 10443
+                },
+                "features": {
+                    "exon": {
+                        "count": 125133,
+                        "density": 4.71,
+                        "length": {
+                            "min": 1,
+                            "max": 11846,
+                            "mean": 197.16,
+                            "median": 121
+                        },
+                        "length_concatenated": {
+                            "min": 19,
+                            "max": 14332,
+                            "mean": 929.22,
+                            "median": 593
+                        }
+                    },
+                    "intron": {
+                        "count": 26443,
+                        "density": 1.0,
+                        "length": {
+                            "min": 29,
+                            "max": 1976954,
+                            "mean": 30700.03,
+                            "median": 9683
+                        }
+                    }
+                }
+            },
+            "lnc_RNA": {
+                "count": 33356,
+                "density": 3.44,
+                "length": {
+                    "min": 183,
+                    "max": 1342680,
+                    "mean": 17616.03,
+                    "median": 5688.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 179637,
+                        "density": 5.39,
+                        "length": {
+                            "min": 1,
+                            "max": 44880,
+                            "mean": 318.05,
+                            "median": 141
+                        },
+                        "length_concatenated": {
+                            "min": 100,
+                            "max": 44880,
+                            "mean": 1712.82,
+                            "median": 890.0
+                        }
+                    },
+                    "intron": {
+                        "count": 32784,
+                        "density": 0.98,
+                        "length": {
+                            "min": 54,
+                            "max": 1339708,
+                            "mean": 16180.69,
+                            "median": 4262.0
+                        }
+                    }
+                }
+            },
+            "unconfirmed_transcript": {
+                "count": 48,
+                "density": 1.0,
+                "length": {
+                    "min": 164,
+                    "max": 7072,
+                    "mean": 2450.12,
+                    "median": 2157.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 48,
+                        "density": 1.0,
+                        "length": {
+                            "min": 164,
+                            "max": 7072,
+                            "mean": 2450.12,
+                            "median": 2157.0
+                        },
+                        "length_concatenated": {
+                            "min": 164,
+                            "max": 7072,
+                            "mean": 2450.12,
+                            "median": 2157.0
+                        }
+                    }
+                }
+            },
+            "V_gene_segment": {
+                "count": 253,
+                "density": 1.0,
+                "length": {
+                    "min": 294,
+                    "max": 1845,
+                    "mean": 562.92,
+                    "median": 523
+                },
+                "features": {
+                    "exon": {
+                        "count": 505,
+                        "density": 2.0,
+                        "length": {
+                            "min": 31,
+                            "max": 1415,
+                            "mean": 206.64,
+                            "median": 279
+                        },
+                        "length_concatenated": {
+                            "min": 294,
+                            "max": 1735,
+                            "mean": 412.47,
+                            "median": 397
+                        }
+                    },
+                    "intron": {
+                        "count": 250,
+                        "density": 0.99,
+                        "length": {
+                            "min": 82,
+                            "max": 913,
+                            "mean": 152.26,
+                            "median": 123.5
+                        }
+                    },
+                    "cds": {
+                        "count": 503,
+                        "density": 1.99,
+                        "length": {
+                            "min": 31,
+                            "max": 328,
+                            "mean": 175.17,
+                            "median": 274
+                        },
+                        "length_concatenated": {
+                            "min": 98,
+                            "max": 132,
+                            "mean": 115.73,
+                            "median": 116
+                        }
+                    }
+                }
+            },
+            "D_gene_segment": {
+                "count": 42,
+                "density": 1.0,
+                "length": {
+                    "min": 8,
+                    "max": 37,
+                    "mean": 21.64,
+                    "median": 20.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 42,
+                        "density": 1.0,
+                        "length": {
+                            "min": 8,
+                            "max": 37,
+                            "mean": 21.64,
+                            "median": 20.0
+                        },
+                        "length_concatenated": {
+                            "min": 8,
+                            "max": 37,
+                            "mean": 21.64,
+                            "median": 20.0
+                        }
+                    },
+                    "cds": {
+                        "count": 42,
+                        "density": 1.0,
+                        "length": {
+                            "min": 8,
+                            "max": 37,
+                            "mean": 21.64,
+                            "median": 20.0
+                        },
+                        "length_concatenated": {
+                            "min": 2,
+                            "max": 12,
+                            "mean": 6.81,
+                            "median": 6.0
+                        }
+                    }
+                }
+            },
+            "J_gene_segment": {
+                "count": 97,
+                "density": 1.0,
+                "length": {
+                    "min": 33,
+                    "max": 176,
+                    "mean": 59.48,
+                    "median": 60
+                },
+                "features": {
+                    "exon": {
+                        "count": 97,
+                        "density": 1.0,
+                        "length": {
+                            "min": 33,
+                            "max": 176,
+                            "mean": 59.48,
+                            "median": 60
+                        },
+                        "length_concatenated": {
+                            "min": 33,
+                            "max": 176,
+                            "mean": 59.48,
+                            "median": 60
+                        }
+                    },
+                    "cds": {
+                        "count": 97,
+                        "density": 1.0,
+                        "length": {
+                            "min": 33,
+                            "max": 151,
+                            "mean": 58.89,
+                            "median": 60
+                        },
+                        "length_concatenated": {
+                            "min": 11,
+                            "max": 50,
+                            "mean": 19.38,
+                            "median": 20
+                        }
+                    }
+                }
+            },
+            "C_gene_segment": {
+                "count": 29,
+                "density": 1.45,
+                "length": {
+                    "min": 441,
+                    "max": 9993,
+                    "mean": 3390.31,
+                    "median": 1999
+                },
+                "features": {
+                    "exon": {
+                        "count": 122,
+                        "density": 4.21,
+                        "length": {
+                            "min": 18,
+                            "max": 2352,
+                            "mean": 312.13,
+                            "median": 307.0
+                        },
+                        "length_concatenated": {
+                            "min": 441,
+                            "max": 2751,
+                            "mean": 1313.1,
+                            "median": 1119
+                        }
+                    },
+                    "intron": {
+                        "count": 24,
+                        "density": 0.83,
+                        "length": {
+                            "min": 376,
+                            "max": 8980,
+                            "mean": 2509.96,
+                            "median": 2344.5
+                        }
+                    },
+                    "cds": {
+                        "count": 118,
+                        "density": 4.07,
+                        "length": {
+                            "min": 9,
+                            "max": 395,
+                            "mean": 219.16,
+                            "median": 295.0
+                        },
+                        "length_concatenated": {
+                            "min": 106,
+                            "max": 495,
+                            "mean": 296.93,
+                            "median": 331
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "long_non_coding_genes": {
+        "count": 37205,
+        "length": {
+            "min": 201,
+            "max": 1375317,
+            "mean": 26439.88,
+            "median": 6087
+        },
+        "transcripts": {
+            "lnc_RNA": {
+                "count": 35758,
+                "density": 1.02,
+                "length": {
+                    "min": 201,
+                    "max": 1375317,
+                    "mean": 27656.03,
+                    "median": 7092.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 103761,
+                        "density": 2.9,
+                        "length": {
+                            "min": 1,
+                            "max": 205012,
+                            "mean": 355.42,
+                            "median": 179
+                        },
+                        "length_concatenated": {
+                            "min": 60,
+                            "max": 205012,
+                            "mean": 1031.36,
+                            "median": 720.0
+                        }
+                    },
+                    "intron": {
+                        "count": 31514,
+                        "density": 0.88,
+                        "length": {
+                            "min": 39,
+                            "max": 1371378,
+                            "mean": 30210.22,
+                            "median": 8580.0
+                        }
+                    }
+                }
+            },
+            "transcript": {
+                "count": 1202,
+                "density": 1.0,
+                "length": {
+                    "min": 201,
+                    "max": 65287,
+                    "mean": 495.93,
+                    "median": 295.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 1292,
+                        "density": 1.07,
+                        "length": {
+                            "min": 36,
+                            "max": 3261,
+                            "mean": 294.43,
+                            "median": 293.0
+                        },
+                        "length_concatenated": {
+                            "min": 201,
+                            "max": 4747,
+                            "mean": 316.48,
+                            "median": 295.0
+                        }
+                    },
+                    "intron": {
+                        "count": 15,
+                        "density": 0.01,
+                        "length": {
+                            "min": 3786,
+                            "max": 62783,
+                            "mean": 14380.27,
+                            "median": 11004
+                        }
+                    }
+                }
+            },
+            "unconfirmed_transcript": {
+                "count": 1030,
+                "density": 1.02,
+                "length": {
+                    "min": 111,
+                    "max": 431224,
+                    "mean": 2437.22,
+                    "median": 1504.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 1043,
+                        "density": 1.01,
+                        "length": {
+                            "min": 28,
+                            "max": 18662,
+                            "mean": 1618.85,
+                            "median": 1428
+                        },
+                        "length_concatenated": {
+                            "min": 111,
+                            "max": 18662,
+                            "mean": 1639.29,
+                            "median": 1491.5
+                        }
+                    },
+                    "intron": {
+                        "count": 10,
+                        "density": 0.01,
+                        "length": {
+                            "min": 256,
+                            "max": 429015,
+                            "mean": 82186.8,
+                            "median": 2922.0
+                        }
+                    }
+                }
+            },
+            "snoRNA": {
+                "count": 74,
+                "density": 1.0,
+                "length": {
+                    "min": 201,
+                    "max": 791,
+                    "mean": 250.46,
+                    "median": 215.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 74,
+                        "density": 1.0,
+                        "length": {
+                            "min": 201,
+                            "max": 791,
+                            "mean": 250.46,
+                            "median": 215.0
+                        },
+                        "length_concatenated": {
+                            "min": 201,
+                            "max": 791,
+                            "mean": 250.46,
+                            "median": 215.0
+                        }
+                    }
+                }
+            },
+            "scRNA": {
+                "count": 6,
+                "density": 1.0,
+                "length": {
+                    "min": 238,
+                    "max": 420,
+                    "mean": 300.67,
+                    "median": 275.5
+                },
+                "features": {
+                    "exon": {
+                        "count": 6,
+                        "density": 1.0,
+                        "length": {
+                            "min": 238,
+                            "max": 420,
+                            "mean": 300.67,
+                            "median": 275.5
+                        },
+                        "length_concatenated": {
+                            "min": 238,
+                            "max": 420,
+                            "mean": 300.67,
+                            "median": 275.5
+                        }
+                    }
+                }
+            },
+            "snRNA": {
+                "count": 5,
+                "density": 1.0,
+                "length": {
+                    "min": 211,
+                    "max": 328,
+                    "mean": 240,
+                    "median": 219
+                },
+                "features": {
+                    "exon": {
+                        "count": 5,
+                        "density": 1.0,
+                        "length": {
+                            "min": 211,
+                            "max": 328,
+                            "mean": 240,
+                            "median": 219
+                        },
+                        "length_concatenated": {
+                            "min": 211,
+                            "max": 328,
+                            "mean": 240,
+                            "median": 219
+                        }
+                    }
+                }
+            },
+            "rRNA": {
+                "count": 2,
+                "density": 1.0,
+                "length": {
+                    "min": 954,
+                    "max": 1559,
+                    "mean": 1256.5,
+                    "median": 1256.5
+                },
+                "features": {
+                    "exon": {
+                        "count": 2,
+                        "density": 1.0,
+                        "length": {
+                            "min": 954,
+                            "max": 1559,
+                            "mean": 1256.5,
+                            "median": 1256.5
+                        },
+                        "length_concatenated": {
+                            "min": 954,
+                            "max": 1559,
+                            "mean": 1256.5,
+                            "median": 1256.5
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "short_non_coding_genes": {
+        "count": 5959,
+        "length": {
+            "min": 41,
+            "max": 200,
+            "mean": 101.81,
+            "median": 102
+        },
+        "transcripts": {
+            "miRNA": {
+                "count": 1879,
+                "density": 1.0,
+                "length": {
+                    "min": 41,
+                    "max": 180,
+                    "mean": 81.89,
+                    "median": 80
+                },
+                "features": {
+                    "exon": {
+                        "count": 1879,
+                        "density": 1.0,
+                        "length": {
+                            "min": 41,
+                            "max": 180,
+                            "mean": 81.89,
+                            "median": 80
+                        },
+                        "length_concatenated": {
+                            "min": 41,
+                            "max": 180,
+                            "mean": 81.89,
+                            "median": 80
+                        }
+                    }
+                }
+            },
+            "snRNA": {
+                "count": 1910,
+                "density": 1.0,
+                "length": {
+                    "min": 50,
+                    "max": 198,
+                    "mean": 110.21,
+                    "median": 107.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 1910,
+                        "density": 1.0,
+                        "length": {
+                            "min": 50,
+                            "max": 198,
+                            "mean": 110.21,
+                            "median": 107.0
+                        },
+                        "length_concatenated": {
+                            "min": 50,
+                            "max": 198,
+                            "mean": 110.21,
+                            "median": 107.0
+                        }
+                    }
+                }
+            },
+            "transcript": {
+                "count": 1033,
+                "density": 1.0,
+                "length": {
+                    "min": 57,
+                    "max": 200,
+                    "mean": 108.78,
+                    "median": 102
+                },
+                "features": {
+                    "exon": {
+                        "count": 1033,
+                        "density": 1.0,
+                        "length": {
+                            "min": 57,
+                            "max": 200,
+                            "mean": 108.78,
+                            "median": 102
+                        },
+                        "length_concatenated": {
+                            "min": 57,
+                            "max": 200,
+                            "mean": 108.78,
+                            "median": 102
+                        }
+                    }
+                }
+            },
+            "lnc_RNA": {
+                "count": 120,
+                "density": 1.0,
+                "length": {
+                    "min": 68,
+                    "max": 200,
+                    "mean": 148.37,
+                    "median": 154.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 120,
+                        "density": 1.0,
+                        "length": {
+                            "min": 68,
+                            "max": 200,
+                            "mean": 148.37,
+                            "median": 154.0
+                        },
+                        "length_concatenated": {
+                            "min": 68,
+                            "max": 200,
+                            "mean": 148.37,
+                            "median": 154.0
+                        }
+                    }
+                }
+            },
+            "snoRNA": {
+                "count": 868,
+                "density": 1.0,
+                "length": {
+                    "min": 55,
+                    "max": 200,
+                    "mean": 107.64,
+                    "median": 107.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 868,
+                        "density": 1.0,
+                        "length": {
+                            "min": 55,
+                            "max": 200,
+                            "mean": 107.64,
+                            "median": 107.0
+                        },
+                        "length_concatenated": {
+                            "min": 55,
+                            "max": 200,
+                            "mean": 107.64,
+                            "median": 107.0
+                        }
+                    }
+                }
+            },
+            "scRNA": {
+                "count": 43,
+                "density": 1.0,
+                "length": {
+                    "min": 83,
+                    "max": 187,
+                    "mean": 138.6,
+                    "median": 132
+                },
+                "features": {
+                    "exon": {
+                        "count": 43,
+                        "density": 1.0,
+                        "length": {
+                            "min": 83,
+                            "max": 187,
+                            "mean": 138.6,
+                            "median": 132
+                        },
+                        "length_concatenated": {
+                            "min": 83,
+                            "max": 187,
+                            "mean": 138.6,
+                            "median": 132
+                        }
+                    }
+                }
+            },
+            "rRNA": {
+                "count": 53,
+                "density": 1.0,
+                "length": {
+                    "min": 84,
+                    "max": 153,
+                    "mean": 124.57,
+                    "median": 119
+                },
+                "features": {
+                    "exon": {
+                        "count": 53,
+                        "density": 1.0,
+                        "length": {
+                            "min": 84,
+                            "max": 153,
+                            "mean": 124.57,
+                            "median": 119
+                        },
+                        "length_concatenated": {
+                            "min": 84,
+                            "max": 153,
+                            "mean": 124.57,
+                            "median": 119
+                        }
+                    }
+                }
+            },
+            "unconfirmed_transcript": {
+                "count": 31,
+                "density": 1.0,
+                "length": {
+                    "min": 87,
+                    "max": 200,
+                    "mean": 150.23,
+                    "median": 148
+                },
+                "features": {
+                    "exon": {
+                        "count": 31,
+                        "density": 1.0,
+                        "length": {
+                            "min": 87,
+                            "max": 200,
+                            "mean": 150.23,
+                            "median": 148
+                        },
+                        "length_concatenated": {
+                            "min": 87,
+                            "max": 200,
+                            "mean": 150.23,
+                            "median": 148
+                        }
+                    }
+                }
+            },
+            "tRNA": {
+                "count": 22,
+                "density": 1.0,
+                "length": {
+                    "min": 59,
+                    "max": 75,
+                    "mean": 68.55,
+                    "median": 69.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 22,
+                        "density": 1.0,
+                        "length": {
+                            "min": 59,
+                            "max": 75,
+                            "mean": 68.55,
+                            "median": 69.0
+                        },
+                        "length_concatenated": {
+                            "min": 59,
+                            "max": 75,
+                            "mean": 68.55,
+                            "median": 69.0
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "pseudogenes": {
+        "count": 15198,
+        "length": {
+            "min": 23,
+            "max": 571395,
+            "mean": 2724.74,
+            "median": 669.0
+        },
+        "transcripts": {
+            "pseudogenic_transcript": {
+                "count": 15201,
+                "density": 1.0,
+                "length": {
+                    "min": 23,
+                    "max": 571395,
+                    "mean": 2723.25,
+                    "median": 669
+                },
+                "features": {
+                    "exon": {
+                        "count": 28619,
+                        "density": 1.88,
+                        "length": {
+                            "min": 3,
+                            "max": 12496,
+                            "mean": 385.2,
+                            "median": 209
+                        },
+                        "length_concatenated": {
+                            "min": 23,
+                            "max": 18351,
+                            "mean": 725.21,
+                            "median": 543
+                        }
+                    },
+                    "intron": {
+                        "count": 3858,
+                        "density": 0.25,
+                        "length": {
+                            "min": 1,
+                            "max": 569832,
+                            "mean": 7872.51,
+                            "median": 1364.5
+                        }
+                    }
+                }
+            },
+            "processed_transcript": {
+                "count": 12,
+                "density": 2.0,
+                "length": {
+                    "min": 370,
+                    "max": 68924,
+                    "mean": 23847.08,
+                    "median": 12994.0
+                },
+                "features": {
+                    "exon": {
+                        "count": 40,
+                        "density": 3.33,
+                        "length": {
+                            "min": 46,
+                            "max": 5020,
+                            "mean": 749.6,
+                            "median": 172.0
+                        },
+                        "length_concatenated": {
+                            "min": 370,
+                            "max": 5571,
+                            "mean": 2498.67,
+                            "median": 2057.5
+                        }
+                    },
+                    "intron": {
+                        "count": 10,
+                        "density": 0.83,
+                        "length": {
+                            "min": 1039,
+                            "max": 63353,
+                            "mean": 25618.1,
+                            "median": 15857.5
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

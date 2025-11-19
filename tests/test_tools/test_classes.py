@@ -34,11 +34,11 @@ class TestTranscript:
 
         assert transcript.gene_id == "gene123"
         assert transcript.type == "mRNA"
-        assert isinstance(transcript.exons_flat, array)
+        assert isinstance(transcript.exons_lengths, array)
         assert transcript.exon_len_sum == 0
         assert transcript.cds_total_len == 0
         assert transcript.cds_segments == 0
-        assert isinstance(transcript.cds_lens, array)
+        assert isinstance(transcript.cds_lengths, array)
 
     def test_transcript_with_none_type(self):
         """Test Transcript with None type."""
