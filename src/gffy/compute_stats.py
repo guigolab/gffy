@@ -1,16 +1,18 @@
 from array import array
-import statistics
+from collections import defaultdict
+import gzip
+import io
+import os
+from typing import Iterable, Optional
+
+import requests
+
 from .tools.helpers import (
     init_category_statistics_dictionary,
     init_orphan_feature,
     parse_gff_line_fast,
     process_feature,
-    resolve_orphans,
-    open_stream,
 )
-import requests
-import os
-import gzip
 
 SKIP_FEATURES = {"region", "chromosome", "scaffold"} #this speeds up the parsing process by skipping these features (can be around 500k lines saved)
 
@@ -19,17 +21,38 @@ def _length_summary(
     values: array,
     decimals: int = 2,
 ) -> dict:
+    """Return min/max/mean/median for an array using a single pass."""
     if not values:
         return {"min": 0, "max": 0, "mean": 0, "median": 0}
 
-    mean = round(statistics.mean(values), decimals)
-    median_value = round(statistics.median(values), decimals)
+    iterator = iter(values)
+    first_value = next(iterator)
+    total = first_value
+    min_value = first_value
+    max_value = first_value
+    collected = [first_value]
+
+    for value in iterator:
+        collected.append(value)
+        total += value
+        if value < min_value:
+            min_value = value
+        elif value > max_value:
+            max_value = value
+
+    collected.sort()
+    count = len(collected)
+    mid = count // 2
+    if count % 2:
+        median_value = collected[mid]
+    else:
+        median_value = (collected[mid - 1] + collected[mid]) / 2
 
     return {
-        "min": int(min(values)),
-        "max": int(max(values)),
-        "mean": mean,
-        "median": median_value,
+        "min": int(min_value),
+        "max": int(max_value),
+        "mean": round(total / count, decimals),
+        "median": round(median_value, decimals),
     }
 
 
@@ -39,8 +62,6 @@ def compute_gff_stats(gff_source: str) -> dict:
 
     Args:
         gff_source: URL (http/https/ftp) or local file path to GFF3 file (may be compressed)
-        skip_features: optional set of feature types to ignore during parsing
-        is_gzipped: when True, skip gzip autodetection (mainly for callers that already know)
 
     Returns:
         Dictionary containing comprehensive statistics for coding genes, long non-coding genes,
@@ -53,44 +74,42 @@ def compute_gff_stats(gff_source: str) -> dict:
     """
     print(f"Processing GFF from: {gff_source}")
 
+    # Core accumulators populated during parsing
     roots = {}
-    id_to_root = {} #feature id to root id mapping
-    transcripts = {} #transcript dictionary -> key is transcript id, value is @Transcript object
-    orphans = [] #list of orphan features
-    #resolve gff path
+    id_to_root = {}  # feature id -> root gene id
+    transcripts = {}  # transcript id -> Transcript object
 
-    if gff_source.startswith(("http://", "https://", "ftp://")):
-        # Handle remote URL
+    # Deferred feature handling (child arrives before parent)
+    waiting_by_parent: dict[str, list] = defaultdict(list)
+    pending_orphans = []  # keep list for final reporting/debug output
+
+    # Basic transport detection (explicit protocols avoid confusing local paths)
+    is_remote_source = gff_source.startswith(("http://", "https://"))
+    response = None
+    file_obj = None
+
+    if is_remote_source:
         print("Fetching from URL...")
         response = requests.get(gff_source, stream=True, timeout=120)
         response.raise_for_status()
         response.raw.decode_content = True
         file_obj = response.raw
-        is_remote = True
     else:
-        # Handle local file
         print("Reading local file...")
         if not os.path.isfile(gff_source):
             raise FileNotFoundError(f"GFF file not found: {gff_source}")
         file_obj = open(gff_source, "rb")
-        is_remote = False
 
-    # Auto-detect gzip compression
+    # Auto-detect gzip compression (URLs rely on extension; local files inspect magic bytes)
     is_gzipped = False
-    if is_remote:
-        # For remote files, check if URL ends with .gz or assume gzipped for common extensions
+    if is_remote_source:
         is_gzipped = gff_source.endswith(".gz") or gff_source.endswith(".gzip")
     else:
-        # For local files, check magic bytes
-        if hasattr(file_obj, "read"):
-            # Peek at first two bytes to check for gzip magic number
-            magic_bytes = file_obj.read(2)
-            is_gzipped = magic_bytes == b"\x1f\x8b"
-            # Reset file pointer
-            if hasattr(file_obj, "seek"):
-                file_obj.seek(0)
+        magic_bytes = file_obj.read(2)
+        is_gzipped = magic_bytes == b"\x1f\x8b"
+        if hasattr(file_obj, "seek"):
+            file_obj.seek(0)
 
-    # Open file with appropriate compression handling
     if is_gzipped:
         print("Detected gzip compression")
         gff_file_cm = gzip.GzipFile(fileobj=file_obj)
@@ -98,76 +117,104 @@ def compute_gff_stats(gff_source: str) -> dict:
         print("Processing as uncompressed file")
         gff_file_cm = file_obj
 
-    # Track if we need to manually close the file object (for local uncompressed files)
-    file_needs_closing = not is_remote and not is_gzipped
+    skip_features = SKIP_FEATURES
+    parse_line = parse_gff_line_fast
+    process = process_feature
+    create_orphan = init_orphan_feature
+
+    def handle_waiting_children(parent_id: Optional[str]) -> None:
+        """Try to attach every deferred child whose parent just became known."""
+        if not parent_id:
+            return
+        pending_children = waiting_by_parent.pop(parent_id, None)
+        if not pending_children:
+            return
+        for orphan in pending_children:
+            if orphan.resolved:
+                continue
+            processed_child = process(
+                orphan.feature_id,
+                orphan.feature_type,
+                orphan.length,
+                orphan.parent_ids,
+                orphan.biotype,
+                roots,
+                id_to_root,
+                transcripts,
+            )
+            if processed_child:
+                orphan.resolved = True
+                handle_waiting_children(orphan.feature_id)
+
+    def iterate_stream(line_iterable: Iterable[str]) -> None:
+        """Parse every row, attaching features or queuing them until their parent exists."""
+        append_pending_orphan = pending_orphans.append
+        waiting_lookup = waiting_by_parent
+        handle_waiting = handle_waiting_children
+        skip_feature_set = skip_features
+        parse_columns = parse_line
+        process_feature_local = process
+
+        for line in line_iterable:
+            if line.startswith("#"):
+                continue
+
+            # Only split the eight required columns; the ninth (attributes) stays intact
+            cols = line.split("\t", 8)
+            if len(cols) < 9:
+                continue
+
+            feature_type_raw = cols[2]
+            if feature_type_raw in skip_feature_set:
+                continue
+
+            # Parse GFF attributes (ID, Parent, biotypes, etc.) only for relevant features
+            feature_type, length, parent_ids, biotype, feature_id = parse_columns(cols)
+            processed = process_feature_local(
+                feature_id,
+                feature_type,
+                length,
+                parent_ids,
+                biotype,
+                roots,
+                id_to_root,
+                transcripts,
+            )
+
+            if processed:
+                # The feature is now anchored; unblock any descendants that were waiting
+                handle_waiting(feature_id)
+            elif parent_ids:
+                # Parent hasn't been seen yet; store for deferred resolution
+                orphan = create_orphan(feature_id, feature_type, length, parent_ids, biotype)
+                append_pending_orphan(orphan)
+                for parent_id in parent_ids:
+                    waiting_lookup[parent_id].append(orphan)
 
     try:
-        # Process GFF file line by line using context manager when possible
         with gff_file_cm as stream:
-            for line in stream:
-                line = line.decode("utf-8", errors="ignore")
-                if line.startswith("#"):
-                    continue
+            if isinstance(stream, io.TextIOBase):
+                iterate_stream(stream)
+            else:
+                with io.TextIOWrapper(stream, encoding="utf-8", errors="ignore") as text_stream:
+                    iterate_stream(text_stream)
 
-                cols = line.split("\t")
-                if len(cols) < 9:
-                    continue
-                
-                # Skip region features (using set for O(1) lookup)
-                if cols[2] in SKIP_FEATURES:
-                    continue
-
-                feature_type, length, parent_ids, biotype, feature_id = parse_gff_line_fast(
-                    cols
-                )
-
-                processed = process_feature(
-                    feature_id,
-                    feature_type,
-                    length,
-                    parent_ids,
-                    biotype,
-                    roots,
-                    id_to_root,
-                    transcripts,
-                )
-
-                if not processed and parent_ids:
-                    orphans.append(
-                        init_orphan_feature(
-                            feature_id, feature_type, length, parent_ids, biotype
-                        )
+        if pending_orphans:
+            # Report any features that never found a parent, useful for debugging malformed GFFs
+            unresolved = [orphan for orphan in pending_orphans if not orphan.resolved]
+            resolved_count = len(pending_orphans) - len(unresolved)
+            if resolved_count:
+                print(f"Resolved {resolved_count} deferred features during parsing")
+            if unresolved:
+                print(f"Warning: {len(unresolved)} orphans could not be resolved")
+                for orphan in unresolved[:5]:
+                    print(
+                        f"Orphan: {orphan.feature_id} {orphan.feature_type} "
+                        f"{orphan.length} {orphan.parent_ids} {orphan.biotype}"
                     )
 
-        if file_needs_closing:
-            file_obj.close()
 
-        # Resolve orphan features (features that appeared before their parents)
-        if orphans:
-            print(f"Initial orphans: {len(orphans)}")
-            max_iterations = 20
-            iteration = 0
-
-            while orphans and iteration < max_iterations:
-                iteration += 1
-                prev_count = len(orphans)
-                orphans = resolve_orphans(orphans, roots, id_to_root, transcripts)
-                resolved = prev_count - len(orphans)
-
-                if resolved > 0:
-                    print(f"Iter {iteration}: {resolved} orphans resolved, {len(orphans)} left")
-
-                if prev_count == len(orphans):
-                    break
-
-            if orphans:
-                print(f"Warning: {len(orphans)} orphans could not be resolved")
-                #print first 5 orphans
-                for orphan in orphans[:5]:
-                    print(f"Orphan: {orphan.feature_id} {orphan.feature_type} {orphan.length} {orphan.parent_ids} {orphan.biotype}")
-
-
-        # Set categories for all genes and lenghts
+        # Set categories for all genes and lengths
         categories_dict = {
             "coding": init_category_statistics_dictionary(),
             "long_non_coding": init_category_statistics_dictionary(),
@@ -184,24 +231,27 @@ def compute_gff_stats(gff_source: str) -> dict:
         # Process all transcripts to compute aggregate statistics
         get_root = roots.get
         for transcript_info in transcripts.values():
-            category = get_root(transcript_info.gene_id).category
-            if not category:
+            root = get_root(transcript_info.gene_id)
+            if not root or not root.category:
                 continue
 
-            transcript_types_stats = categories_dict[category]['types'][transcript_info.type]
-            transcript_types_stats["gene_ids"].add(transcript_info.gene_id)
-            transcript_types_stats["length_list"].append(transcript_info.length)
-            transcript_types_stats["exon_length_list"].extend(transcript_info.exons_lengths)
-            transcript_types_stats["spliced_length_list"].append(transcript_info.exon_len_sum)
-            
+            transcript_stats = categories_dict[root.category]["types"][transcript_info.type]
+            transcript_stats["gene_ids"].add(transcript_info.gene_id)
+            transcript_stats["length_list"].append(transcript_info.length)
+            transcript_stats["exon_length_list"].extend(transcript_info.exons_lengths)
+            transcript_stats["spliced_length_list"].append(transcript_info.exon_len_sum)
+
             if transcript_info.cds_count > 0:
-                transcript_types_stats["cds_length_list"].extend(transcript_info.cds_lengths)
-                transcript_types_stats["protein_length_list"].append((transcript_info.cds_len_sum // 3))
+                transcript_stats["cds_length_list"].extend(transcript_info.cds_lengths)
+                transcript_stats["protein_length_list"].append(transcript_info.cds_len_sum // 3)
             if transcript_info.exon_count > 1:
-                transcript_types_stats["intron_length_list"].append(transcript_info.length - transcript_info.exon_len_sum)
+                transcript_stats["intron_length_list"].append(
+                    transcript_info.length - transcript_info.exon_len_sum
+                )
             
         # Build final results dictionary
         def build_category(category_name: str) -> dict:
+            """Assemble the final metrics for a single gene category."""
             category_stats = categories_dict[category_name]
             gene_lengths = category_stats["gene_length_list"]
 
@@ -214,18 +264,24 @@ def compute_gff_stats(gff_source: str) -> dict:
             for transcript_type, transcript_stats in category_stats["types"].items():
                 # Transcript stats step
                 transcript_length_list = transcript_stats["length_list"]
+                transcript_count = len(transcript_length_list)
+                gene_id_count = len(transcript_stats["gene_ids"])
+                transcript_density = (
+                    round(transcript_count / gene_id_count, 2) if gene_id_count else 0.0
+                )
                 type_entry = {
-                    "count": len(transcript_length_list),
-                    "density": round(len(transcript_length_list) / len(transcript_stats['gene_ids']), 2),
+                    "count": transcript_count,
+                    "density": transcript_density,
                     "length": _length_summary(transcript_length_list),
                     "features": {},
                 }
 
                 # Exon stats step
                 exon_length_list = transcript_stats["exon_length_list"]
+                exon_count = len(exon_length_list)
                 type_entry["features"]["exon"] = {
-                    "count": len(exon_length_list),
-                    "density": round(len(exon_length_list) / type_entry["count"], 2),
+                    "count": exon_count,
+                    "density": round(exon_count / transcript_count, 2) if transcript_count else 0.0,
                     "length": _length_summary(exon_length_list),
                     "length_concatenated": _length_summary(transcript_stats["spliced_length_list"]),
                 }
@@ -233,18 +289,22 @@ def compute_gff_stats(gff_source: str) -> dict:
                 # Intron stats step
                 intron_length_list = transcript_stats["intron_length_list"]
                 if intron_length_list:
+                    intron_count = len(intron_length_list)
                     type_entry["features"]["intron"] = {
-                        "count": len(intron_length_list),
-                        "density": round(len(intron_length_list) / type_entry["count"], 2),
+                        "count": intron_count,
+                        "density": round(intron_count / transcript_count, 2)
+                        if transcript_count
+                        else 0.0,
                         "length": _length_summary(intron_length_list),
                     }
 
                 # CDS stats step
                 cds_length_list = transcript_stats["cds_length_list"]
                 if cds_length_list:
+                    cds_count = len(cds_length_list)
                     type_entry["features"]["cds"] = {
-                        "count": len(cds_length_list),
-                        "density": round(len(cds_length_list) / type_entry["count"], 2),
+                        "count": cds_count,
+                        "density": round(cds_count / transcript_count, 2) if transcript_count else 0.0,
                         "length": _length_summary(cds_length_list),
                         "length_concatenated": _length_summary(transcript_stats["protein_length_list"]),
                     }
@@ -266,3 +326,12 @@ def compute_gff_stats(gff_source: str) -> dict:
 
         traceback.print_exc()
         return {}
+    finally:
+        # Ensure network/file handles are released even if the parse fails
+        if not is_remote_source and file_obj:
+            try:
+                file_obj.close()
+            except Exception:
+                pass
+        if response is not None:
+            response.close()
