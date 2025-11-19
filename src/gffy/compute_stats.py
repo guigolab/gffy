@@ -15,6 +15,7 @@ from .tools.helpers import (
 )
 
 SKIP_FEATURES = {"region", "chromosome", "scaffold"} #this speeds up the parsing process by skipping these features (can be around 500k lines saved)
+CATEGORY_NAMES = ("coding", "long_non_coding", "short_non_coding", "pseudogene")
 
 
 def _length_summary(
@@ -54,6 +55,50 @@ def _length_summary(
         "mean": round(total / count, decimals),
         "median": round(median_value, decimals),
     }
+
+
+def _init_category_store() -> dict:
+    """Return a dictionary with initialized stats for every category."""
+    return {name: init_category_statistics_dictionary() for name in CATEGORY_NAMES}
+
+
+def _density(count: int, base: int) -> float:
+    """Safe density helper that guards against division by zero."""
+    return round(count / base, 2) if base else 0.0
+
+
+def _build_feature_stats(
+    count: int,
+    denominator: int,
+    lengths: array,
+    concatenated_lengths: Optional[array] = None,
+) -> dict:
+    """Produce the standard feature stats structure used in the final JSON."""
+    feature_stats = {
+        "count": count,
+        "density": _density(count, denominator),
+        "length": _length_summary(lengths),
+    }
+    if concatenated_lengths is not None:
+        feature_stats["length_concatenated"] = _length_summary(concatenated_lengths)
+    return feature_stats
+
+
+def _update_transcript_stats(transcript_info, transcript_stats: dict) -> None:
+    """Append per-transcript measurements into the aggregate stats bucket."""
+    transcript_stats["gene_ids"].add(transcript_info.gene_id)
+    transcript_stats["length_list"].append(transcript_info.length)
+    transcript_stats["exon_length_list"].extend(transcript_info.exons_lengths)
+    transcript_stats["spliced_length_list"].append(transcript_info.exon_len_sum)
+
+    if transcript_info.cds_count > 0:
+        transcript_stats["cds_length_list"].extend(transcript_info.cds_lengths)
+        transcript_stats["protein_length_list"].append(transcript_info.cds_len_sum // 3)
+
+    if transcript_info.exon_count > 1:
+        transcript_stats["intron_length_list"].append(
+            transcript_info.length - transcript_info.exon_len_sum
+        )
 
 
 def compute_gff_stats(gff_source: str) -> dict:
@@ -215,12 +260,7 @@ def compute_gff_stats(gff_source: str) -> dict:
 
 
         # Set categories for all genes and lengths
-        categories_dict = {
-            "coding": init_category_statistics_dictionary(),
-            "long_non_coding": init_category_statistics_dictionary(),
-            "short_non_coding": init_category_statistics_dictionary(),
-            "pseudogene": init_category_statistics_dictionary(),
-        }
+        categories_dict = _init_category_store()
 
         for gene_info in roots.values():
             gene_info.set_category()
@@ -236,18 +276,7 @@ def compute_gff_stats(gff_source: str) -> dict:
                 continue
 
             transcript_stats = categories_dict[root.category]["types"][transcript_info.type]
-            transcript_stats["gene_ids"].add(transcript_info.gene_id)
-            transcript_stats["length_list"].append(transcript_info.length)
-            transcript_stats["exon_length_list"].extend(transcript_info.exons_lengths)
-            transcript_stats["spliced_length_list"].append(transcript_info.exon_len_sum)
-
-            if transcript_info.cds_count > 0:
-                transcript_stats["cds_length_list"].extend(transcript_info.cds_lengths)
-                transcript_stats["protein_length_list"].append(transcript_info.cds_len_sum // 3)
-            if transcript_info.exon_count > 1:
-                transcript_stats["intron_length_list"].append(
-                    transcript_info.length - transcript_info.exon_len_sum
-                )
+            _update_transcript_stats(transcript_info, transcript_stats)
             
         # Build final results dictionary
         def build_category(category_name: str) -> dict:
@@ -266,9 +295,7 @@ def compute_gff_stats(gff_source: str) -> dict:
                 transcript_length_list = transcript_stats["length_list"]
                 transcript_count = len(transcript_length_list)
                 gene_id_count = len(transcript_stats["gene_ids"])
-                transcript_density = (
-                    round(transcript_count / gene_id_count, 2) if gene_id_count else 0.0
-                )
+                transcript_density = _density(transcript_count, gene_id_count)
                 type_entry = {
                     "count": transcript_count,
                     "density": transcript_density,
@@ -279,35 +306,33 @@ def compute_gff_stats(gff_source: str) -> dict:
                 # Exon stats step
                 exon_length_list = transcript_stats["exon_length_list"]
                 exon_count = len(exon_length_list)
-                type_entry["features"]["exon"] = {
-                    "count": exon_count,
-                    "density": round(exon_count / transcript_count, 2) if transcript_count else 0.0,
-                    "length": _length_summary(exon_length_list),
-                    "length_concatenated": _length_summary(transcript_stats["spliced_length_list"]),
-                }
+                type_entry["features"]["exon"] = _build_feature_stats(
+                    exon_count,
+                    transcript_count,
+                    exon_length_list,
+                    transcript_stats["spliced_length_list"],
+                )
 
                 # Intron stats step
                 intron_length_list = transcript_stats["intron_length_list"]
                 if intron_length_list:
                     intron_count = len(intron_length_list)
-                    type_entry["features"]["intron"] = {
-                        "count": intron_count,
-                        "density": round(intron_count / transcript_count, 2)
-                        if transcript_count
-                        else 0.0,
-                        "length": _length_summary(intron_length_list),
-                    }
+                    type_entry["features"]["intron"] = _build_feature_stats(
+                        intron_count,
+                        transcript_count,
+                        intron_length_list,
+                    )
 
                 # CDS stats step
                 cds_length_list = transcript_stats["cds_length_list"]
                 if cds_length_list:
                     cds_count = len(cds_length_list)
-                    type_entry["features"]["cds"] = {
-                        "count": cds_count,
-                        "density": round(cds_count / transcript_count, 2) if transcript_count else 0.0,
-                        "length": _length_summary(cds_length_list),
-                        "length_concatenated": _length_summary(transcript_stats["protein_length_list"]),
-                    }
+                    type_entry["features"]["cds"] = _build_feature_stats(
+                        cds_count,
+                        transcript_count,
+                        cds_length_list,
+                        transcript_stats["protein_length_list"],
+                    )
 
                 category_obj["transcripts"][transcript_type] = type_entry
 
