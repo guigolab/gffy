@@ -277,11 +277,10 @@ def resolve_orphans(orphans: list[OrphanFeature], roots: dict, id_to_root: dict,
     still_orphaned = []
 
     for orphan in orphans:
-        length = orphan.end - orphan.start + 1
         processed = process_feature(
             orphan.feature_id,
             orphan.feature_type,
-            length,
+            orphan.length,
             orphan.parent_ids,
             orphan.biotype,
             roots,
