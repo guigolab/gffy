@@ -1,0 +1,97 @@
+{
+    "coding_genes": {
+        "count": 72385,
+        "length": {
+            "min": 201,
+            "max": 81522,
+            "mean": 3609.18,
+            "median": 2343
+        },
+        "transcripts": {
+            "mRNA": {
+                "count": 110985,
+                "density": 1.53,
+                "length": {
+                    "min": 201,
+                    "max": 81522,
+                    "mean": 3999.42,
+                    "median": 2726
+                },
+                "features": {
+                    "exon": {
+                        "count": 645903,
+                        "density": 5.82,
+                        "length": {
+                            "min": 3,
+                            "max": 6828,
+                            "mean": 244.09,
+                            "median": 133
+                        },
+                        "length_concatenated": {
+                            "min": 201,
+                            "max": 16437,
+                            "mean": 1420.52,
+                            "median": 1188
+                        }
+                    },
+                    "intron": {
+                        "count": 89799,
+                        "density": 0.81,
+                        "length": {
+                            "min": 21,
+                            "max": 77886,
+                            "mean": 3187.33,
+                            "median": 1992
+                        }
+                    },
+                    "cds": {
+                        "count": 645903,
+                        "density": 5.82,
+                        "length": {
+                            "min": 3,
+                            "max": 6828,
+                            "mean": 244.09,
+                            "median": 133
+                        },
+                        "length_concatenated": {
+                            "min": 67,
+                            "max": 5479,
+                            "mean": 473.51,
+                            "median": 396
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "long_non_coding_genes": {
+        "count": 0,
+        "length": {
+            "min": 0,
+            "max": 0,
+            "mean": 0,
+            "median": 0
+        },
+        "transcripts": {}
+    },
+    "short_non_coding_genes": {
+        "count": 0,
+        "length": {
+            "min": 0,
+            "max": 0,
+            "mean": 0,
+            "median": 0
+        },
+        "transcripts": {}
+    },
+    "pseudogenes": {
+        "count": 0,
+        "length": {
+            "min": 0,
+            "max": 0,
+            "mean": 0,
+            "median": 0
+        },
+        "transcripts": {}
+    }
+}
