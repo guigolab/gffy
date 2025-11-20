@@ -19,7 +19,7 @@ def main():
 Examples:
   %(prog)s https://example.com/annotation.gff3.gz
   %(prog)s /path/to/local/annotation.gff3 --output stats.json
-  %(prog)s annotation.gff3 --pretty --gzipped
+  %(prog)s annotation.gff3 --pretty 
         """
     )
 
@@ -38,12 +38,6 @@ Examples:
         "--pretty",
         action="store_true",
         help="Pretty-print JSON output with indentation"
-    )
-
-    parser.add_argument(
-        "--gzipped",
-        action="store_true",
-        help="Gzip the input file"
     )
 
     args = parser.parse_args()
