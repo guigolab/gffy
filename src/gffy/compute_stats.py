@@ -6,7 +6,6 @@ from .tools.helpers import (
     parse_gff_line_fast,
     process_feature,
     resolve_orphans,
-    open_stream,
 )
 import requests
 import os
@@ -57,8 +56,8 @@ def compute_gff_stats(gff_source: str) -> dict:
     id_to_root = {} #feature id to root id mapping
     transcripts = {} #transcript dictionary -> key is transcript id, value is @Transcript object
     orphans = [] #list of orphan features
-    #resolve gff path
 
+    #resolve gff path
     if gff_source.startswith(("http://", "https://", "ftp://")):
         # Handle remote URL
         print("Fetching from URL...")

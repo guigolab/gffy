@@ -3,7 +3,6 @@ from typing import Optional
 from .classes import Gene, Transcript, OrphanFeature
 import sys
 import requests
-import requests
 import gzip
 from contextlib import contextmanager
 from array import array

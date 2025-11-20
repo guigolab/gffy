@@ -59,8 +59,7 @@ Examples:
 
         builtins.print = stderr_print
 
-        is_gzipped = args.gzipped
-        stats = compute_gff_stats(args.gff_source, is_gzipped)
+        stats = compute_gff_stats(args.gff_source)
 
         # Restore original print
         builtins.print = original_print
