@@ -6,7 +6,6 @@ from .tools.helpers import (
     parse_gff_line_fast,
     process_feature,
     resolve_orphans,
-    open_stream,
 )
 import requests
 import os
@@ -51,17 +50,17 @@ def compute_gff_stats(gff_source: str) -> dict:
         requests.RequestException: If URL cannot be accessed
         Exception: For other processing errors
     """
-    print(f"Processing GFF from: {gff_source}")
+    print(f"[gffy] Processing GFF from: {gff_source}")
 
     roots = {}
     id_to_root = {} #feature id to root id mapping
     transcripts = {} #transcript dictionary -> key is transcript id, value is @Transcript object
     orphans = [] #list of orphan features
-    #resolve gff path
 
+    #resolve gff path
     if gff_source.startswith(("http://", "https://", "ftp://")):
         # Handle remote URL
-        print("Fetching from URL...")
+        print("[gffy] Fetching from URL...")
         response = requests.get(gff_source, stream=True, timeout=120)
         response.raise_for_status()
         response.raw.decode_content = True
@@ -69,7 +68,7 @@ def compute_gff_stats(gff_source: str) -> dict:
         is_remote = True
     else:
         # Handle local file
-        print("Reading local file...")
+        print("[gffy] Reading local file...")
         if not os.path.isfile(gff_source):
             raise FileNotFoundError(f"GFF file not found: {gff_source}")
         file_obj = open(gff_source, "rb")
@@ -92,10 +91,10 @@ def compute_gff_stats(gff_source: str) -> dict:
 
     # Open file with appropriate compression handling
     if is_gzipped:
-        print("Detected gzip compression")
+        print("[gffy] Detected gzip compression")
         gff_file_cm = gzip.GzipFile(fileobj=file_obj)
     else:
-        print("Processing as uncompressed file")
+        print("[gffy] Processing as uncompressed file")
         gff_file_cm = file_obj
 
     # Track if we need to manually close the file object (for local uncompressed files)
@@ -144,7 +143,7 @@ def compute_gff_stats(gff_source: str) -> dict:
 
         # Resolve orphan features (features that appeared before their parents)
         if orphans:
-            print(f"Initial orphans: {len(orphans)}")
+            print(f"[gffy] Initial orphans: {len(orphans)}")
             max_iterations = 20
             iteration = 0
 
@@ -155,16 +154,16 @@ def compute_gff_stats(gff_source: str) -> dict:
                 resolved = prev_count - len(orphans)
 
                 if resolved > 0:
-                    print(f"Iter {iteration}: {resolved} orphans resolved, {len(orphans)} left")
+                    print(f"[gffy] Iter {iteration}: {resolved} orphans resolved, {len(orphans)} left")
 
                 if prev_count == len(orphans):
                     break
 
             if orphans:
-                print(f"Warning: {len(orphans)} orphans could not be resolved")
+                print(f"[gffy] Warning: {len(orphans)} orphans could not be resolved")
                 #print first 5 orphans
                 for orphan in orphans[:5]:
-                    print(f"Orphan: {orphan.feature_id} {orphan.feature_type} {orphan.length} {orphan.parent_ids} {orphan.biotype}")
+                    print(f"[gffy] Orphan: {orphan.feature_id} {orphan.feature_type} {orphan.length} {orphan.parent_ids} {orphan.biotype}")
 
 
         # Set categories for all genes and lenghts
@@ -261,7 +260,7 @@ def compute_gff_stats(gff_source: str) -> dict:
         }
 
     except Exception as e:
-        print(f"✗ Error: {str(e)}")
+        print(f"[gffy] ✗ Error: {str(e)}")
         import traceback
 
         traceback.print_exc()

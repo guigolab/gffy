@@ -7,6 +7,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+import resource
 
 from gffy import compute_gff_stats
 
@@ -19,7 +20,7 @@ def main():
 Examples:
   %(prog)s https://example.com/annotation.gff3.gz
   %(prog)s /path/to/local/annotation.gff3 --output stats.json
-  %(prog)s annotation.gff3 --pretty --gzipped
+  %(prog)s annotation.gff3 --pretty 
         """
     )
 
@@ -40,12 +41,6 @@ Examples:
         help="Pretty-print JSON output with indentation"
     )
 
-    parser.add_argument(
-        "--gzipped",
-        action="store_true",
-        help="Gzip the input file"
-    )
-
     args = parser.parse_args()
 
     try:
@@ -59,8 +54,7 @@ Examples:
 
         builtins.print = stderr_print
 
-        is_gzipped = args.gzipped
-        stats = compute_gff_stats(args.gff_source, is_gzipped)
+        stats = compute_gff_stats(args.gff_source)
 
         # Restore original print
         builtins.print = original_print
@@ -86,6 +80,15 @@ Examples:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
+    finally:
+        # Always executed, even on error
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+        print(
+            f"[gffy] User time: {usage.ru_utime:.2f}s, "
+            f"System time: {usage.ru_stime:.2f}s, "
+            f"Max RAM: {usage.ru_maxrss/1024:.1f} MB",
+            file=sys.stderr,
+        )
 
 if __name__ == "__main__":
     main()
