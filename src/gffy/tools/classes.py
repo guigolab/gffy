@@ -3,7 +3,14 @@ from array import array
 
 
 class Gene:
-    __slots__ = ("feature_type", "biotype", "length", "has_cds", "has_exon", "has_multiple_exons", "category")
+    __slots__ = (
+        "feature_type",
+        "biotype",
+        "length",
+        "has_cds",
+        "has_exon",
+        "has_multiple_exons",
+        "category")
 
     def __init__(self, feature_type: str, biotype: Optional[str], length: int):
         self.feature_type = feature_type
