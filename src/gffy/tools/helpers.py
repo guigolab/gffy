@@ -7,62 +7,6 @@ import gzip
 from contextlib import contextmanager
 from array import array
 
-@contextmanager
-def open_stream(path, chunk_size=1024, is_gzipped=True):
-    """
-    Yield a line-by-line stream for local or HTTP/HTTPS files.
-    Supports gzip automatically.
-    """
-    is_url = path.startswith(("http://", "https://"))
-
-    if is_url:
-        resp = requests.get(path, stream=True)
-        resp.raise_for_status()
-
-        # Check gzip by header OR file extension
-        http_is_gzip = (
-            resp.headers.get("Content-Encoding") == "gzip"
-            or is_gzipped
-        )
-
-        if http_is_gzip:
-            # Wrap raw response in a GzipFile for streaming decompression
-            gz = gzip.GzipFile(fileobj=resp.raw)
-
-            def line_stream():
-                for line in gz:
-                    yield line.decode("utf-8")
-
-            try:
-                yield line_stream()
-            finally:
-                gz.close()
-                resp.close()
-
-        else:
-            # Plain text streaming
-            def line_stream():
-                for line in resp.iter_lines(chunk_size=chunk_size, decode_unicode=True):
-                    if line:
-                        yield line
-
-            try:
-                yield line_stream()
-            finally:
-                resp.close()
-
-    else:
-        # Local file path
-        if is_gzipped:
-            f = gzip.open(path, "rt", encoding="utf-8")
-        else:
-            f = open(path, "r", encoding="utf-8")
-
-        try:
-            yield f
-        finally:
-            f.close()
-
 def init_orphan_feature(
     feature_id: str,
     feature_type: str,

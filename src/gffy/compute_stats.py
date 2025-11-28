@@ -108,7 +108,7 @@ def compute_gff_stats(gff_source: str) -> dict:
                 if line.startswith("#"):
                     continue
 
-                cols = line.split("\t")
+                cols = line.split("\t")[8]
                 if len(cols) < 9:
                     continue
                 
