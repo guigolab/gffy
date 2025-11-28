@@ -1,31 +1,31 @@
 from typing import Optional
 from array import array
+import sys
 
 
 class Gene:
-    __slots__ = ("feature_type", "biotype", "length", "has_cds", "has_exon", "has_multiple_exons", "category")
+    __slots__ = ("feature_type", "biotype", "length", "has_cds", "has_exon", "has_multiple_exons", "has_children", "category")
 
     def __init__(self, feature_type: str, biotype: Optional[str], length: int):
-        self.feature_type = feature_type
-        self.biotype = biotype
+        self.feature_type = sys.intern(feature_type)
+        self.biotype = sys.intern(biotype) if biotype else None
         self.length = length
         self.has_cds = False
         self.has_exon = False
         self.has_multiple_exons = False
+        self.has_children = False
         self.category = None
 
     def set_category(self):
         if self.feature_type == "pseudogene":
-            self.category = "pseudogene"
-            return
+            self.category = sys.intern("pseudogene")
         elif self.has_cds or self.biotype == "protein_coding":
-            self.category = "coding"
-            return
+            self.category = sys.intern("coding")
         elif self.has_exon:
             if self.has_multiple_exons or self.length > 200:
-                self.category = "long_non_coding"
+                self.category = sys.intern("long_non_coding")
             else:
-                self.category = "short_non_coding"
+                self.category = sys.intern("short_non_coding")
         
 class Transcript:
     __slots__ = (
@@ -41,8 +41,8 @@ class Transcript:
     )
 
     def __init__(self, gene_id: str, ttype: Optional[str]):
-        self.gene_id = gene_id
-        self.type = ttype
+        self.gene_id = sys.intern(gene_id)
+        self.type = sys.intern(ttype) if ttype else None
         self.length = 0
         self.exons_lengths = array("i")
         self.exon_len_sum = 0
@@ -53,19 +53,19 @@ class Transcript:
 
 
 class OrphanFeature:
-    __slots__ = ("feature_id", "feature_type", "length", "parent_ids", "biotype", "resolved")
+    __slots__ = ("feature_id", "feature_type", "length", "parent_id", "biotype", "resolved")
 
     def __init__(
         self,
         feature_id: str,
         feature_type: str,
         length: int,
-        parent_ids: list,
+        parent_id: Optional[str],
         biotype: Optional[str],
     ):
         self.feature_id = feature_id
-        self.feature_type = feature_type
+        self.feature_type = sys.intern(feature_type)
         self.length = length
-        self.parent_ids = parent_ids
-        self.biotype = biotype
+        self.parent_id = parent_id
+        self.biotype = sys.intern(biotype) if biotype else None
         self.resolved = False

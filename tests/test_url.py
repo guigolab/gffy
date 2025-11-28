@@ -1,8 +1,8 @@
 import time
 import tracemalloc
 
-from gffy import compute_gff_stats
-
+from gffy import GFFy
+import json
 
 def test_url():
     url = "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz"
@@ -12,7 +12,9 @@ def test_url():
     start_time = time.perf_counter()
     
     # Run the function
-    compute_gff_stats(url)
+    with GFFy(url) as gffy:
+        print(len(gffy.transcripts))
+
     
     # Measure elapsed time
     end_time = time.perf_counter()

@@ -7,11 +7,10 @@ from .tools.helpers import (
     process_feature,
     resolve_orphans,
 )
+from .tools.constants import COMMON_TRANSCRIPT_TYPES, COMMON_GENE_TYPES, SKIP_FEATURES
 import requests
 import os
 import gzip
-
-SKIP_FEATURES = {"region", "chromosome", "scaffold"} #this speeds up the parsing process by skipping these features (can be around 500k lines saved)
 
 
 def _length_summary(
@@ -52,7 +51,7 @@ def compute_gff_stats(gff_source: str) -> dict:
     """
     print(f"[gffy] Processing GFF from: {gff_source}")
 
-    roots = {}
+    roots = {} #gene dictionary -> key is gene id, value is @Gene object
     id_to_root = {} #feature id to root id mapping
     transcripts = {} #transcript dictionary -> key is transcript id, value is @Transcript object
     orphans = [] #list of orphan features
@@ -108,15 +107,20 @@ def compute_gff_stats(gff_source: str) -> dict:
                 if line.startswith("#"):
                     continue
 
-                cols = line.split("\t")[8]
+                # Only split the eight required columns; the ninth (attributes) stays intact
+                cols = line.split("\t", 8)
                 if len(cols) < 9:
                     continue
-                
-                # Skip region features (using set for O(1) lookup)
-                if cols[2] in SKIP_FEATURES:
+
+                feature_type_raw = cols[2]
+                if feature_type_raw in SKIP_FEATURES:
                     continue
 
-                feature_type, length, parent_ids, biotype, feature_id = parse_gff_line_fast(
+                # Skip features with neither ID nor Parent (rare, but saves processing)
+                if 'ID=' not in cols[8] and 'Parent=' not in cols[8]:
+                    continue
+
+                feature_type, length, parent_id, biotype, feature_id = parse_gff_line_fast(
                     cols
                 )
 
@@ -124,20 +128,21 @@ def compute_gff_stats(gff_source: str) -> dict:
                     feature_id,
                     feature_type,
                     length,
-                    parent_ids,
+                    parent_id,
                     biotype,
                     roots,
                     id_to_root,
                     transcripts,
                 )
 
-                if not processed and parent_ids:
+                if not processed and parent_id:
                     orphans.append(
                         init_orphan_feature(
-                            feature_id, feature_type, length, parent_ids, biotype
+                            feature_id, feature_type, length, parent_id, biotype
                         )
                     )
-
+                
+            print(f"[gffy] Processed {len(roots)} genes, {len(transcripts)} transcripts, {len(orphans)} orphans")
         if file_needs_closing:
             file_obj.close()
 
@@ -163,9 +168,15 @@ def compute_gff_stats(gff_source: str) -> dict:
                 print(f"[gffy] Warning: {len(orphans)} orphans could not be resolved")
                 #print first 5 orphans
                 for orphan in orphans[:5]:
-                    print(f"[gffy] Orphan: {orphan.feature_id} {orphan.feature_type} {orphan.length} {orphan.parent_ids} {orphan.biotype}")
+                    print(f"[gffy] Orphan: {orphan.feature_id} {orphan.feature_type} {orphan.length} {orphan.parent_id} {orphan.biotype}")
 
-
+        # Early drop childless roots (genes with no transcripts/features)
+        initial_gene_count = len(roots)
+        roots = {k: v for k, v in roots.items() if v.has_children}
+        dropped_childless = initial_gene_count - len(roots)
+        if dropped_childless > 0:
+            print(f"[gffy] Dropped {dropped_childless} childless genes")
+        
         # Set categories for all genes and lenghts
         categories_dict = {
             "coding": init_category_statistics_dictionary(),
@@ -179,7 +190,9 @@ def compute_gff_stats(gff_source: str) -> dict:
             if not gene_info.category:
                 continue
             categories_dict[gene_info.category]["gene_length_list"].append(gene_info.length)
-        
+        #drop roots without category
+        roots = {k: v for k, v in roots.items() if v.category}
+
         # Process all transcripts to compute aggregate statistics
         get_root = roots.get
         for transcript_info in transcripts.values():
