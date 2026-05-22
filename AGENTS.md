@@ -1,9 +1,13 @@
 # AGENTS.md - Guidelines for AI Coding Agents
 
 ## Build/Test Commands
-- **Install**: `pip install -e .`
-- **Test all**: `pytest`
+- **Install**: `pip install -e .` or `pip install -e ".[dev]"` (stdlib-only runtime)
+- **CLI**: `gffy` or `python -m gffy`
+- **Test all**: `pytest` (requires `pip install -e ".[dev]"` for jsonschema)
 - **Test single**: `pytest path/to/test_file.py::TestClass::test_method`
+- **Package smoke**: `python -m build`
+- **CI**: `.github/workflows/ci.yml` (push/PR to `main` and `master`)
+- **Release**: GitHub Release → `.github/workflows/publish.yml` (PyPI trusted publishing)
 - **Lint**: `flake8`
 - **Format**: `black .`
 - **Type check**: `mypy`

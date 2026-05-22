@@ -4,24 +4,33 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gffy"
-version = "0.0.1"
-description = "Fast and efficient GFF3 genomic statistics calculator"
+version = "0.1.0"
+description = "Fast, low-RAM GFF3/GTF tools: annotrieve-compatible stats, bulk JSONL, GTF-to-GFF3 conversion; large files sorted by seqid (GNU sort) then streamed per-chromosome"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Emilio R", email = "your-email@example.com"}
+    {name = "Emilio R", email = "emilio.righi@crg.eu"}
 ]
 maintainers = [
-    {name = "Emilio R", email = "your-email@example.com"}
+    {name = "Emilio R", email = "emilio.righi@crg.eu"}
 ]
 keywords = [
     "gff3",
+    "gtf",
+    "gff",
     "genomics",
     "bioinformatics",
-    "statistics",
     "gene-annotation",
-    "transcriptomics"
+    "transcriptomics",
+    "statistics",
+    "annotation",
+    "converter",
+    "gffy-convert",
+    "jsonl",
+    "low-memory",
+    "streaming",
+    "large-files",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -37,13 +46,13 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-dependencies = [
-    "requests>=2.25.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "jsonschema>=4.0",
+    "build>=1.0",
     "black>=22.0",
     "flake8>=4.0",
     "mypy>=0.950",
@@ -51,19 +60,26 @@ dev = [
 
 [project.scripts]
 gffy = "gffy.cli:main"
+gffy-convert = "gffy.convert_cli:main"
 
 [project.urls]
-Homepage = "https://github.com/emilior/gffy"
-Repository = "https://github.com/emilior/gffy"
-Documentation = "https://github.com/emilior/gffy#readme"
-"Bug Tracker" = "https://github.com/emilior/gffy/issues"
+Homepage = "https://github.com/guigolab/gffy"
+Repository = "https://github.com/guigolab/gffy"
+Documentation = "https://github.com/guigolab/gffy#readme"
+"Bug Tracker" = "https://github.com/guigolab/gffy/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["gffy", "gffy.tools"]
+packages = ["gffy"]
 
 [tool.setuptools.package-data]
-gffy = ["py.typed"]
+gffy = ["py.typed", "schema.json", "annotrieve-schema.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: hits external Annotrieve API and remote GFF sources",
+]
 
 [tool.black]
 line-length = 100

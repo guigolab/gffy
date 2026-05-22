@@ -1,1 +1,1 @@
-# Tests for gffy package
+"""Tests for the gffy package."""

@@ -1,30 +1,105 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "GFFStats",
-  "description": "Genomic feature statistics aligned with annotrieve GFFStats embedded document",
+  "title": "CustomAnnotation",
+  "description": "Annotrieve Favorites import record (offline export from gffy)",
   "type": "object",
+  "required": [
+    "kind",
+    "annotation_id",
+    "custom_name",
+    "uploaded_md5",
+    "uploaded_at",
+    "uploaded_file_size",
+    "features_summary"
+  ],
+  "additionalProperties": true,
   "properties": {
-    "gene_category_stats": {
+    "kind": {
+      "type": "string",
+      "enum": ["custom"]
+    },
+    "annotation_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$"
+    },
+    "custom_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uploaded_md5": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$"
+    },
+    "uploaded_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uploaded_file_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "features_summary": {
       "type": "object",
-      "patternProperties": {
-        "^(coding|pseudogene|non_coding)$": {
-          "$ref": "#/definitions/geneCategoryFeatureStats"
+      "required": ["types", "sources"],
+      "properties": {
+        "attribute_keys": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "types": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "biotypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "root_type_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "types_missing_id": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "has_biotype": { "type": "boolean" },
+        "has_cds": { "type": "boolean" },
+        "has_exon": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "features_statistics": {
+      "type": "object",
+      "required": ["gene_category_stats", "transcript_type_stats"],
+      "properties": {
+        "gene_category_stats": {
+          "type": "object",
+          "patternProperties": {
+            "^(coding|pseudogene|non_coding)$": {
+              "$ref": "#/definitions/geneCategoryFeatureStats"
+            }
+          },
+          "additionalProperties": false
+        },
+        "transcript_type_stats": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/definitions/genericTranscriptTypeStats"
+            }
+          },
+          "additionalProperties": true
         }
       },
       "additionalProperties": false
-    },
-    "transcript_type_stats": {
-      "type": "object",
-      "patternProperties": {
-        ".*": {
-          "$ref": "#/definitions/genericTranscriptTypeStats"
-        }
-      },
-      "additionalProperties": true
     }
   },
-  "required": ["gene_category_stats", "transcript_type_stats"],
-  "additionalProperties": false,
   "definitions": {
     "genericLengthStats": {
       "type": "object",

@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+gffy = {file = ".", editable = true}
 
 [dev-packages]
 

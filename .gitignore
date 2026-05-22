@@ -140,3 +140,5 @@ Thumbs.db
 *.gff3
 *.gff3.gz
 data/
+
+.venv-test/
